@@ -14,4 +14,9 @@ public:
 
 private:
     std::vector<Task> tasks_;
+
+public:
+    [[nodiscard]] std::vector<Task> tasks() const {
+        return tasks_;
+    }
 };
