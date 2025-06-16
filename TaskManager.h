@@ -8,7 +8,7 @@ class TaskManager {
 public:
     void addTask(std::string_view title);
 
-    bool removeTask(int index) const;
+    bool removeTask(std::size_t index);
 
     void printTasks();
 

@@ -8,8 +8,8 @@ struct Task {
 
     Task() = default;
 
-    explicit Task(std::string &title, bool done = false)
-        : title_(std::move(title)),
-          done_(done) {
+    explicit Task(std::string title, bool done = false)
+        : title_(std::move(title)), done_(done) {
     }
+
 };

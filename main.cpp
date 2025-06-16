@@ -8,6 +8,10 @@ int main() {
 
 
     manager.addTask("My first task");
+    manager.addTask("My second task");
     manager.printTasks();
+    manager.removeTask(0);
+    manager.printTasks();
+
     return 0;
 }
