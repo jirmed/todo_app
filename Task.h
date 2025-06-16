@@ -1,16 +1,15 @@
-//
-// Created by jiri21 on 15.06.2025.
-//
+#pragma once
+#include <string>
 
-#ifndef TASK_H
-#define TASK_H
 
-namespace todo {
+struct Task {
+    std::string title_;
+    bool done_ = false;
 
-class Task {
+    Task() = default;
 
+    explicit Task(std::string &title, bool done = false)
+        : title_(std::move(title)),
+          done_(done) {
+    }
 };
-
-} // todo
-
-#endif //TASK_H

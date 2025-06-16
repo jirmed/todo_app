@@ -1,16 +1,17 @@
-//
-// Created by jiri21 on 15.06.2025.
-//
+#pragma once
+#include <vector>
 
-#ifndef TASKMANAGER_H
-#define TASKMANAGER_H
+#include "Task.h"
 
-namespace todo {
 
 class TaskManager {
+public:
+    void addTask(std::string_view title);
 
+    bool removeTask(int index) const;
+
+    void printTasks();
+
+private:
+    std::vector<Task> tasks_;
 };
-
-} // todo
-
-#endif //TASKMANAGER_H
