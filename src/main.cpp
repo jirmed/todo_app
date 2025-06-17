@@ -25,32 +25,22 @@ int main() {
             continue;
         }
         switch (choice) {
-            case 1: {
+            case 1:
                 cout << "Enter task title: ";
                 string title;
                 cin.ignore(); // vyčistit buffer
                 getline(cin, title);
                 manager.addTask(title);
                 break;
-            }
-            case 2: {
+            case 2:
                 cout << "Enter task index: ";
                 int index;
-                if (!(cin >> index)) {
-                    cin.clear();
-                    cin.ignore(10000, '\n');
-                    cout << "Invalid input. Please enter a number.\n";
-                    break;
-                }
-                if (!manager.removeTask(index)) {
-                    cout << "Invalid index.\n";
-                }
+                cin >> index;
+                manager.removeTask(index);
                 break;
-            }
-            case 3: {
+            case 3:
                 manager.printTasks();
                 break;
-            }
             case 4:
                 break;
             default:
@@ -59,6 +49,5 @@ int main() {
     }
 
 
-    return
-            0;
+    return 0;
 }
