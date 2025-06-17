@@ -7,47 +7,67 @@ using std::endl;
 using std::string;
 using std::cin;
 
+const int EXIT_CHOICE = 4;
+const int INPUT_BUFFER_SIZE = 10000;
+
+void displayMenu() {
+    cout << "Welcome to the task manager" << endl;
+    cout << "1. Add task" << endl;
+    cout << "2. Remove task" << endl;
+    cout << "3. Print tasks" << endl;
+    cout << "4. Exit" << endl << endl;
+    cout << "Enter your choice: ";
+}
+
+void handleInvalidInput() {
+    cin.clear();
+    cin.ignore(INPUT_BUFFER_SIZE, '\n');
+    cout << "Invalid input. Please try again.\n";
+}
+
+void handleAddTask(TaskManager &manager) {
+    cout << "Enter task title: ";
+    string title;
+    cin.ignore();
+    getline(cin, title);
+    manager.addTask(title);
+}
+
+void handleRemoveTask(TaskManager &manager) {
+    cout << "Enter task index: ";
+    int index;
+    cin >> index;
+    manager.removeTask(index);
+}
+
 int main() {
     TaskManager manager;
     int choice = 0;
 
-    while (choice != 4) {
-        cout << "Welcome to the task manager" << endl;
-        cout << "1. Add task" << endl;
-        cout << "2. Remove task" << endl;
-        cout << "3. Print tasks" << endl;
-        cout << "4. Exit" << endl << endl;
-        cout << "Enter your choice: ";
+    while (choice != EXIT_CHOICE) {
+        displayMenu();
+
         if (!(cin >> choice)) {
-            cin.clear();
-            cin.ignore(10000, '\n');
-            cout << "Invalid input. Please try again.\n";
+            handleInvalidInput();
             continue;
         }
+
         switch (choice) {
             case 1:
-                cout << "Enter task title: ";
-                string title;
-                cin.ignore(); // vyčistit buffer
-                getline(cin, title);
-                manager.addTask(title);
+                handleAddTask(manager);
                 break;
             case 2:
-                cout << "Enter task index: ";
-                int index;
-                cin >> index;
-                manager.removeTask(index);
+                handleRemoveTask(manager);
                 break;
             case 3:
                 manager.printTasks();
                 break;
-            case 4:
+            case EXIT_CHOICE:
                 break;
             default:
                 cout << "Invalid choice. Please try again.\n\n";
         }
     }
-
 
     return 0;
 }
