@@ -2,53 +2,63 @@
 #include <string>
 #include "TaskManager.h"
 
+using std::cout;
+using std::endl;
+using std::string;
+using std::cin;
+
 int main() {
     TaskManager manager;
-    int choice;
-    std::string taskTitle;
-    size_t index;
+    int choice = 0;
 
-    while (true) {
-        std::cout << "\nTodo App Menu:\n";
-        std::cout << "1. List tasks\n";
-        std::cout << "2. Add task\n";
-        std::cout << "3. Remove task\n";
-        std::cout << "4. Exit\n";
-        std::cout << "Enter your choice: ";
-
-        if (!(std::cin >> choice)) {
-            std::cin.clear();
-            std::cin.ignore(10000, '\n');
-            std::cout << "Invalid input. Please try again.\n";
+    while (choice != 4) {
+        cout << "Welcome to the task manager" << endl;
+        cout << "1. Add task" << endl;
+        cout << "2. Remove task" << endl;
+        cout << "3. Print tasks" << endl;
+        cout << "4. Exit" << endl << endl;
+        cout << "Enter your choice: ";
+        if (!(cin >> choice)) {
+            cin.clear();
+            cin.ignore(10000, '\n');
+            cout << "Invalid input. Please try again.\n";
             continue;
         }
-
         switch (choice) {
-            case 1:
-                manager.printTasks();
+            case 1: {
+                cout << "Enter task title: ";
+                string title;
+                cin.ignore(); // vyčistit buffer
+                getline(cin, title);
+                manager.addTask(title);
                 break;
-            case 2:
-                std::cin.ignore();
-                std::cout << "Enter task title: ";
-                std::getline(std::cin, taskTitle);
-                manager.addTask(taskTitle);
-                std::cout << "Task added successfully!\n";
-                break;
-            case 3:
-                std::cout << "Enter task index to remove: ";
-                std::cin >> index;
-                if (manager.removeTask(index)) {
-                    std::cout << "Task removed successfully!\n";
-                } else {
-                    std::cout << "Invalid task index!\n";
+            }
+            case 2: {
+                cout << "Enter task index: ";
+                int index;
+                if (!(cin >> index)) {
+                    cin.clear();
+                    cin.ignore(10000, '\n');
+                    cout << "Invalid input. Please enter a number.\n";
+                    break;
+                }
+                if (!manager.removeTask(index)) {
+                    cout << "Invalid index.\n";
                 }
                 break;
+            }
+            case 3: {
+                manager.printTasks();
+                break;
+            }
             case 4:
-                std::cout << "Goodbye!\n";
-                return 0;
+                break;
             default:
-                std::cout << "Invalid choice. Please try again.\n";
+                cout << "Invalid choice. Please try again.\n\n";
         }
     }
-    return 0;
+
+
+    return
+            0;
 }
