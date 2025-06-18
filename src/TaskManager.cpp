@@ -15,10 +15,3 @@ bool TaskManager::removeTask(std::size_t index) {
     tasks_.erase(tasks_.begin() + index);
     return true;
 }
-
-void TaskManager::printTasks() {
-    std::cout << "Printing tasks" << std::endl;
-    for (auto &task : tasks_) {
-        std::cout << task.title_ << std::endl;
-    }
-}
