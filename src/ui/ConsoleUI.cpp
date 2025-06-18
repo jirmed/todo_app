@@ -2,19 +2,12 @@
 #include <iostream>
 #include <string>
 #include <limits>
+#include <optional>
 #ifdef _WIN32
 #include <windows.h>
 #endif
 
 namespace {
-    enum class MenuOption {
-        SHOW_TASKS = 1,
-        ADD_TASK = 2,
-        REMOVE_TASK = 3,
-        MARK_DONE = 4,
-        EXIT = 5
-    };
-
     class UIMessages {
     public:
         // Success messages
@@ -73,7 +66,9 @@ void ConsoleUI::showMenu() {
 }
 
 void ConsoleUI::handleUserChoice() {
-    switch (static_cast<MenuOption>(getUserChoice())) {
+    int choice = getUserChoice();
+    if (auto opt = toMenuOption(choice)) {
+        switch (*opt) {
         case MenuOption::SHOW_TASKS:
             displayTasks(manager_.tasks());
             break;
@@ -92,6 +87,9 @@ void ConsoleUI::handleUserChoice() {
         default:
             showInvalidChoiceMessage();
             break;
+        }
+    } else {
+        showInvalidChoiceMessage();
     }
 }
 
@@ -126,7 +124,6 @@ int ConsoleUI::getUserChoice() {
     std::cin.ignore();
     return choice;
 }
-
 
 void ConsoleUI::exitApplication() {
     std::cout << UIMessages::EXITING << "\n";
@@ -179,4 +176,15 @@ std::size_t ConsoleUI::promptForTaskIndex() {
     std::cin >> index;
     std::cin.ignore();
     return index;
+}
+
+std::optional<MenuOption> ConsoleUI::toMenuOption(int value) {
+    switch (value) {
+        case 1: return MenuOption::SHOW_TASKS;
+        case 2: return MenuOption::ADD_TASK;
+        case 3: return MenuOption::REMOVE_TASK;
+        case 4: return MenuOption::MARK_DONE;
+        case 5: return MenuOption::EXIT;
+        default: return std::nullopt;
+    }
 }

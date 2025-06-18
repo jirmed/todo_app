@@ -2,8 +2,17 @@
 #include "UI.h"
 #include "../TaskManager.h"
 #include <memory>
+#include <optional>
 
-class ConsoleUI : public UI {
+enum class MenuOption {
+    SHOW_TASKS = 1,
+    ADD_TASK = 2,
+    REMOVE_TASK = 3,
+    MARK_DONE = 4,
+    EXIT = 5
+};
+
+class ConsoleUI final : public UI {
 private:
     TaskManager &manager_;
 
@@ -26,6 +35,8 @@ public:
     std::string promptForNewTaskTitle() override;
 
     std::size_t promptForTaskIndex() override;
+
+    std::optional<MenuOption> toMenuOption(int value);
 
 private:
     static void showMenu();
