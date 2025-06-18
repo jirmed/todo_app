@@ -30,13 +30,13 @@ public:
 
     void displayTasks(const std::vector<Task> &tasks) override;
 
-    std::string formatTaskItem(std::size_t index, const Task &task);
+    std::string formatTaskLine(std::size_t index, const Task &task);
 
     std::string promptForNewTaskTitle() override;
 
     std::size_t promptForTaskIndex() override;
 
-    std::optional<MenuOption> toMenuOption(int value);
+    static std::optional<MenuOption> toMenuOption(int value);
 
 private:
     static void showMenu();

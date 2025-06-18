@@ -44,7 +44,7 @@ void ConsoleUI::showMenu() {
 
 void ConsoleUI::handleUserChoice() {
     int choice = getUserChoice();
-    if (auto opt = toMenuOption(choice)) {
+    if (const auto opt = toMenuOption(choice)) {
         switch (*opt) {
             case MenuOption::SHOW_TASKS:
                 displayTasks(manager_.tasks());
@@ -131,11 +131,11 @@ void ConsoleUI::displayTasks(const std::vector<Task> &tasks) {
 
     cout << TASKS_LIST_TITLE << endl;
     for (std::size_t i = 0; i < tasks.size(); ++i) {
-        cout << formatTaskItem(i, tasks[i]) << endl;
+        cout << formatTaskLine(i, tasks[i]) << endl;
     }
 }
 
-std::string ConsoleUI::formatTaskItem(std::size_t index, const Task &task) {
+std::string ConsoleUI::formatTaskLine(std::size_t index, const Task &task) {
     const char statusChar = task.done_ ? 'x' : ' ';
     return std::to_string(index) + ". [" + statusChar + "] " + task.title_;
 }
@@ -156,12 +156,13 @@ std::size_t ConsoleUI::promptForTaskIndex() {
 }
 
 std::optional<MenuOption> ConsoleUI::toMenuOption(int value) {
+    using enum MenuOption;
     switch (value) {
-        case 1: return MenuOption::SHOW_TASKS;
-        case 2: return MenuOption::ADD_TASK;
-        case 3: return MenuOption::REMOVE_TASK;
-        case 4: return MenuOption::MARK_DONE;
-        case 5: return MenuOption::EXIT;
+        case 1: return SHOW_TASKS;
+        case 2: return ADD_TASK;
+        case 3: return REMOVE_TASK;
+        case 4: return MARK_DONE;
+        case 5: return EXIT;
         default: return std::nullopt;
     }
 }
