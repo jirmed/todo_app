@@ -6,18 +6,17 @@
 #include <windows.h>
 #endif
 
-ConsoleUI::ConsoleUI(TaskManager& manager) : manager_(manager) {
+
+ConsoleUI::ConsoleUI(TaskManager &manager) : manager_(manager) {
 #ifdef _WIN32
-    // Nastavení UTF-8 pro Windows konzoli
     SetConsoleCP(CP_UTF8);
     SetConsoleOutputCP(CP_UTF8);
 #endif
 }
 
-
 void ConsoleUI::run() {
-    std::cout << "=== TODO APLIKACE ===" << std::endl;
-    
+    std::cout << "=== TODO APLIKACE ===\n";
+
     while (true) {
         showMenu();
         handleUserChoice();
@@ -25,52 +24,52 @@ void ConsoleUI::run() {
 }
 
 void ConsoleUI::showMenu() {
-    std::cout << "\n--- MENU ---" << std::endl;
-    std::cout << "1. Zobrazit úkoly" << std::endl;
-    std::cout << "2. Přidat úkol" << std::endl;
-    std::cout << "3. Odstranit úkol" << std::endl;
-    std::cout << "4. Ukončit" << std::endl;
+    std::cout << "\n--- MENU ---\n";
+    std::cout << "1. Zobrazit úkoly\n";
+    std::cout << "2. Přidat úkol\n";
+    std::cout << "3. Odstranit úkol\n";
+    std::cout << "4. Ukončit\n";
     std::cout << "Vyberte možnost (1-4): ";
 }
 
 void ConsoleUI::handleUserChoice() {
     int choice = getUserChoice();
-    
+
     switch (choice) {
         case 1:
             manager_.printTasks();
             break;
-            
+
         case 2: {
             std::cout << "Zadejte název úkolu: ";
             std::string title;
-            std::getline(std::cin, title);
+            std::getline(std::cin >> std::ws, title);
             manager_.addTask(title);
-            std::cout << "Úkol byl přidán!" << std::endl;
+            std::cout << "Úkol byl přidán!\n";
             break;
         }
-        
+
         case 3: {
             manager_.printTasks();
-            std::cout << "Zadejte číslo úkolu k odstranění (začínáme od 0): ";
+            std::cout << "Zadejte číslo úkolu k odstranění (začínáme od 1): ";
             size_t index;
             std::cin >> index;
-            std::cin.ignore(); // Vyčistit buffer
-            
-            if (manager_.removeTask(index)) {
-                std::cout << "Úkol byl odstraněn!" << std::endl;
+            std::cin.ignore();
+
+            if (index > 0 && manager_.removeTask(index - 1)) {
+                std::cout << "Úkol byl odstraněn!\n";
             } else {
-                std::cout << "Neplatné číslo úkolu!" << std::endl;
+                std::cout << "Neplatné číslo úkolu!\n";
             }
             break;
         }
-        
+
         case 4:
-            std::cout << "Ukončuji aplikaci..." << std::endl;
-            exit(0);
-            
+            std::cout << "Ukončuji aplikaci...\n";
+            std::exit(0);
+
         default:
-            std::cout << "Neplatná volba! Zkuste to znovu." << std::endl;
+            std::cout << "Neplatná volba! Zkuste to znovu.\n";
             break;
     }
 }
@@ -78,6 +77,6 @@ void ConsoleUI::handleUserChoice() {
 int ConsoleUI::getUserChoice() {
     int choice;
     std::cin >> choice;
-    std::cin.ignore(); // Vyčistit buffer po čtení čísla
+    std::cin.ignore();
     return choice;
 }
