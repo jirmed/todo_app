@@ -13,7 +13,15 @@ public:
     void run() override;
     
 private:
-    void showMenu();
-    void handleUserChoice();
-    int getUserChoice();
+    static void showMenu();
+    void handleUserChoice() const;
+
+    static int getUserChoice();
+    void showTasks() const;
+    void addNewTask() const;
+    void removeExistingTask() const;
+
+    static void exitApplication();
+
+    static void showInvalidChoiceMessage();
 };

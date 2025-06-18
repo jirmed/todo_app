@@ -32,46 +32,60 @@ void ConsoleUI::showMenu() {
     std::cout << "Vyberte možnost (1-4): ";
 }
 
-void ConsoleUI::handleUserChoice() {
+void ConsoleUI::handleUserChoice() const {
     int choice = getUserChoice();
-
     switch (choice) {
         case 1:
-            manager_.printTasks();
+            showTasks();
             break;
-
-        case 2: {
-            std::cout << "Zadejte název úkolu: ";
-            std::string title;
-            std::getline(std::cin >> std::ws, title);
-            manager_.addTask(title);
-            std::cout << "Úkol byl přidán!\n";
+        case 2:
+            addNewTask();
             break;
-        }
-
-        case 3: {
-            manager_.printTasks();
-            std::cout << "Zadejte číslo úkolu k odstranění (začínáme od 1): ";
-            size_t index;
-            std::cin >> index;
-            std::cin.ignore();
-
-            if (index > 0 && manager_.removeTask(index - 1)) {
-                std::cout << "Úkol byl odstraněn!\n";
-            } else {
-                std::cout << "Neplatné číslo úkolu!\n";
-            }
+        case 3:
+            removeExistingTask();
             break;
-        }
-
         case 4:
-            std::cout << "Ukončuji aplikaci...\n";
-            std::exit(0);
-
+            exitApplication();
+            break;
         default:
-            std::cout << "Neplatná volba! Zkuste to znovu.\n";
+            showInvalidChoiceMessage();
             break;
     }
+}
+
+void ConsoleUI::showTasks() const {
+    manager_.printTasks();
+}
+
+void ConsoleUI::addNewTask() const {
+    std::cout << "Zadejte název úkolu: ";
+    std::string title;
+    std::getline(std::cin >> std::ws, title);
+    manager_.addTask(title);
+    std::cout << "Úkol byl přidán!\n";
+}
+
+void ConsoleUI::removeExistingTask() const {
+    manager_.printTasks();
+    std::cout << "Zadejte číslo úkolu k odstranění (začínáme od 1): ";
+    size_t index;
+    std::cin >> index;
+    std::cin.ignore();
+
+    if (index > 0 && manager_.removeTask(index - 1)) {
+        std::cout << "Úkol byl odstraněn!\n";
+    } else {
+        std::cout << "Neplatné číslo úkolu!\n";
+    }
+}
+
+void ConsoleUI::exitApplication() {
+    std::cout << "Ukončuji aplikaci...\n";
+    std::exit(0);
+}
+
+void ConsoleUI::showInvalidChoiceMessage() {
+    std::cout << "Neplatná volba! Zkuste to znovu.\n";
 }
 
 int ConsoleUI::getUserChoice() {
