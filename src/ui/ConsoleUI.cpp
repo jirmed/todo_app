@@ -1,6 +1,7 @@
 #include "ConsoleUI.h"
 #include <iostream>
 #include <string>
+#include <limits>
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -117,10 +118,15 @@ void ConsoleUI::handleMarkDone() {
 
 int ConsoleUI::getUserChoice() {
     int choice;
-    std::cin >> choice;
+    if (!(std::cin >> choice)) {
+        std::cin.clear(); // reset error flags
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // vyčistit buffer
+        return -1; // nebo jiná hodnota mimo rozsah
+    }
     std::cin.ignore();
     return choice;
 }
+
 
 void ConsoleUI::exitApplication() {
     std::cout << UIMessages::EXITING << "\n";
