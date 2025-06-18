@@ -30,7 +30,7 @@ public:
 
     void displayTasks(const std::vector<Task> &tasks) override;
 
-    std::string formatTaskLine(std::size_t index, const Task &task);
+    static std::string formatTaskLine(std::size_t index, const Task &task);
 
     std::string promptForNewTaskTitle() override;
 
