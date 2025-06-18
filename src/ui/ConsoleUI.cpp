@@ -1,12 +1,19 @@
-//
-// Created by jiri21 on 17.06.2025.
-//
-
 #include "ConsoleUI.h"
 #include <iostream>
 #include <string>
 
-ConsoleUI::ConsoleUI(TaskManager& manager) : manager_(manager) {}
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
+ConsoleUI::ConsoleUI(TaskManager& manager) : manager_(manager) {
+#ifdef _WIN32
+    // Nastavení UTF-8 pro Windows konzoli
+    SetConsoleCP(CP_UTF8);
+    SetConsoleOutputCP(CP_UTF8);
+#endif
+}
+
 
 void ConsoleUI::run() {
     std::cout << "=== TODO APLIKACE ===" << std::endl;
