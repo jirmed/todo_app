@@ -4,13 +4,12 @@
 #include <string>
 #include <limits>
 #include <optional>
+
 #ifdef _WIN32
 #include <windows.h>
-
 #endif
 
-
-ConsoleUI::ConsoleUI(TaskManager &manager) : manager_(manager) {
+ConsoleUI::ConsoleUI(TaskManager& manager) : manager_(manager) {
 #ifdef _WIN32
     SetConsoleCP(CP_UTF8);
     SetConsoleOutputCP(CP_UTF8);
@@ -18,14 +17,19 @@ ConsoleUI::ConsoleUI(TaskManager &manager) : manager_(manager) {
 }
 
 namespace {
-    using namespace messages;
+    using messages::get;
+    using messages::MessageKey;
+    using enum MessageKey;  // umožní používat např. APP_TITLE místo MessageKey::APP_TITLE
     using std::cout;
     using std::cin;
     using std::endl;
+
+    // Alias pro get() pro zkrácení zápisu
+    auto t = [](MessageKey key) { return get(key); };
 }
 
 [[noreturn]] void ConsoleUI::run() {
-    cout << APP_TITLE << endl;
+    cout << t(APP_TITLE) << endl;
     while (true) {
         showMenu();
         handleUserChoice();
@@ -33,13 +37,13 @@ namespace {
 }
 
 void ConsoleUI::showMenu() {
-    cout << MENU_TITLE << endl;
-    cout << MENU_SHOW_TASKS << endl;
-    cout << MENU_ADD_TASK << endl;
-    cout << MENU_REMOVE_TASK << endl;
-    cout << MENU_MARK_DONE << endl;
-    cout << MENU_EXIT << endl;
-    cout << MENU_PROMPT;
+    cout << t(MENU_TITLE) << endl;
+    cout << t(MENU_SHOW_TASKS) << endl;
+    cout << t(MENU_ADD_TASK) << endl;
+    cout << t(MENU_REMOVE_TASK) << endl;
+    cout << t(MENU_MARK_DONE) << endl;
+    cout << t(MENU_EXIT) << endl;
+    cout << t(MENU_PROMPT);
 }
 
 void ConsoleUI::handleUserChoice() {
@@ -72,43 +76,43 @@ void ConsoleUI::handleUserChoice() {
 
 void ConsoleUI::handleAddTask() {
     manager_.addTask(promptForNewTaskTitle());
-    notifySuccess(TASK_ADDED);
+    notifySuccess(t(TASK_ADDED));
 }
 
 void ConsoleUI::handleRemoveTask() {
     if (manager_.removeTask(promptForTaskIndex())) {
-        notifySuccess(TASK_REMOVED);
+        notifySuccess(t(TASK_REMOVED));
     } else {
-        notifyError(INVALID_TASK_NUMBER);
+        notifyError(t(INVALID_TASK_NUMBER));
     }
 }
 
 void ConsoleUI::handleMarkDone() {
     if (manager_.markDone(promptForTaskIndex())) {
-        notifySuccess(TASK_COMPLETED);
+        notifySuccess(t(TASK_COMPLETED));
     } else {
-        notifyError(INVALID_TASK_NUMBER);
+        notifyError(t(INVALID_TASK_NUMBER));
     }
 }
 
 int ConsoleUI::getUserChoice() {
     int choice;
     if (!(cin >> choice)) {
-        cin.clear(); // reset error flags
-        cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // vyčistit buffer
-        return -1; // nebo jiná hodnota mimo rozsah
+        cin.clear();
+        cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        return -1;
     }
     cin.ignore();
     return choice;
 }
 
 void ConsoleUI::exitApplication() {
-    cout << EXITING << endl;
+    cout << t(EXITING) << endl;
     std::exit(0);
 }
 
 void ConsoleUI::showInvalidChoiceMessage() {
-    cout << INVALID_CHOICE << endl;
+    cout << t(INVALID_CHOICE) << endl;
 }
 
 void ConsoleUI::notifySuccess(std::string_view message) {
@@ -123,32 +127,32 @@ void ConsoleUI::notifyError(std::string_view message) {
     cout << "[CHYBA] " << message << endl;
 }
 
-void ConsoleUI::displayTasks(const std::vector<Task> &tasks) {
+void ConsoleUI::displayTasks(const std::vector<Task>& tasks) {
     if (tasks.empty()) {
-        cout << NO_TASKS << endl;
+        cout << t(NO_TASKS) << endl;
         return;
     }
 
-    cout << TASKS_LIST_TITLE << endl;
+    cout << t(TASKS_LIST_TITLE) << endl;
     for (std::size_t i = 0; i < tasks.size(); ++i) {
         cout << formatTaskLine(i, tasks[i]) << endl;
     }
 }
 
-std::string ConsoleUI::formatTaskLine(std::size_t index, const Task &task) {
+std::string ConsoleUI::formatTaskLine(std::size_t index, const Task& task) {
     const char statusChar = task.done_ ? 'x' : ' ';
     return std::to_string(index) + ". [" + statusChar + "] " + task.title_;
 }
 
 std::string ConsoleUI::promptForNewTaskTitle() {
-    cout << TASK_TITLE_PROMPT;
+    cout << t(TASK_TITLE_PROMPT);
     std::string title;
     std::getline(cin >> std::ws, title);
     return title;
 }
 
 std::size_t ConsoleUI::promptForTaskIndex() {
-    cout << TASK_INDEX_PROMPT;
+    cout << t(TASK_INDEX_PROMPT);
     std::size_t index;
     cin >> index;
     cin.ignore();

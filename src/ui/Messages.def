@@ -1,0 +1,23 @@
+// Messages.def
+X(TASK_ADDED, "Úkol byl přidán!")
+X(TASK_REMOVED, "Úkol byl odstraněn!")
+X(TASK_COMPLETED, "Úkol byl označen jako dokončený!")
+
+X(INVALID_TASK_NUMBER, "Neplatné číslo úkolu!")
+X(INVALID_CHOICE, "Neplatná volba! Zkuste to znovu.")
+
+X(NO_TASKS, "Žádné úkoly.")
+X(APP_TITLE, "=== TODO APLIKACE ===")
+X(MENU_TITLE, "\n--- MENU ---")
+X(EXITING, "Ukončuji aplikaci...")
+X(TASKS_LIST_TITLE, "\nSeznam úkolů:")
+
+X(MENU_PROMPT, "Vyberte možnost (1-5): ")
+X(TASK_TITLE_PROMPT, "Zadejte název úkolu: ")
+X(TASK_INDEX_PROMPT, "Zadejte číslo úkolu: ")
+
+X(MENU_SHOW_TASKS, "1. Zobrazit úkoly")
+X(MENU_ADD_TASK, "2. Přidat úkol")
+X(MENU_REMOVE_TASK, "3. Odstranit úkol")
+X(MENU_MARK_DONE, "4. Označit úkol jako dokončený")
+X(MENU_EXIT, "5. Ukončit")
