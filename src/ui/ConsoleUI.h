@@ -30,6 +30,12 @@ private:
 
     void handleUserChoice();
 
+    void handleAddTask();
+
+    void handleRemoveTask();
+
+    void handleMarkDone();
+
     static int getUserChoice();
 
     static void exitApplication();

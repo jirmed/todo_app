@@ -1,10 +1,24 @@
 #include "ConsoleUI.h"
 #include <iostream>
 #include <string>
-
 #ifdef _WIN32
 #include <windows.h>
 #endif
+
+namespace {
+    // Menu opcí
+    constexpr int MENU_SHOW_TASKS = 1;
+    constexpr int MENU_ADD_TASK = 2;
+    constexpr int MENU_REMOVE_TASK = 3;
+    constexpr int MENU_MARK_DONE = 4;
+    constexpr int MENU_EXIT = 5;
+
+    // Textové zprávy
+    constexpr auto MSG_TASK_ADDED = "Úkol byl přidán!";
+    constexpr auto MSG_TASK_REMOVED = "Úkol byl odstraněn!";
+    constexpr auto MSG_TASK_COMPLETED = "Úkol byl označen jako dokončený!";
+    constexpr auto MSG_INVALID_TASK_NUMBER = "Neplatné číslo úkolu!";
+}
 
 ConsoleUI::ConsoleUI(TaskManager &manager) : manager_(manager) {
 #ifdef _WIN32
@@ -15,7 +29,6 @@ ConsoleUI::ConsoleUI(TaskManager &manager) : manager_(manager) {
 
 void ConsoleUI::run() {
     std::cout << "=== TODO APLIKACE ===\n";
-
     while (true) {
         showMenu();
         handleUserChoice();
@@ -34,35 +47,45 @@ void ConsoleUI::showMenu() {
 
 void ConsoleUI::handleUserChoice() {
     switch (int choice = getUserChoice()) {
-        case 1:
+        case MENU_SHOW_TASKS:
             displayTasks(manager_.tasks());
             break;
-        case 2: {
-            manager_.addTask(promptForNewTaskTitle());
-            notifySuccess("Úkol byl přidán!");
+        case MENU_ADD_TASK:
+            handleAddTask();
             break;
-        }
-        case 3: {
-            if (manager_.removeTask(promptForTaskIndex())) {
-                notifySuccess("Úkol byl odstraněn!");
-            } else {
-                notifyError("Neplatné číslo úkolu!");
-            }
+        case MENU_REMOVE_TASK:
+            handleRemoveTask();
             break;
-        }case 4: {
-            if (manager_.markDone(promptForTaskIndex())) {
-                notifySuccess("Úkol byl označen jako dokončený!");
-            } else {
-                notifyError("Neplatné číslo úkolu!");
-            }
+        case MENU_MARK_DONE:
+            handleMarkDone();
             break;
-        }
-        case 5:
+        case MENU_EXIT:
             exitApplication();
             break;
         default:
             showInvalidChoiceMessage();
             break;
+    }
+}
+
+void ConsoleUI::handleAddTask() {
+    manager_.addTask(promptForNewTaskTitle());
+    notifySuccess(MSG_TASK_ADDED);
+}
+
+void ConsoleUI::handleRemoveTask() {
+    if (manager_.removeTask(promptForTaskIndex())) {
+        notifySuccess(MSG_TASK_REMOVED);
+    } else {
+        notifyError(MSG_INVALID_TASK_NUMBER);
+    }
+}
+
+void ConsoleUI::handleMarkDone() {
+    if (manager_.markDone(promptForTaskIndex())) {
+        notifySuccess(MSG_TASK_COMPLETED);
+    } else {
+        notifyError(MSG_INVALID_TASK_NUMBER);
     }
 }
 
@@ -99,7 +122,6 @@ void ConsoleUI::displayTasks(const std::vector<Task> &tasks) {
         std::cout << "Žádné úkoly.\n";
         return;
     }
-
     std::cout << "\nSeznam úkolů:\n";
     for (std::size_t i = 0; i < tasks.size(); ++i) {
         const auto &task = tasks[i];
