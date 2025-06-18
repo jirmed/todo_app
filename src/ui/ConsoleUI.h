@@ -21,6 +21,8 @@ public:
 
     void displayTasks(const std::vector<Task> &tasks) override;
 
+    std::string formatTaskItem(std::size_t index, const Task &task);
+
     std::string promptForNewTaskTitle() override;
 
     std::size_t promptForTaskIndex() override;

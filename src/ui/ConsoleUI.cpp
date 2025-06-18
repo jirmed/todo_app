@@ -14,11 +14,35 @@ namespace {
         EXIT = 5
     };
 
-    struct Messages {
+    class UIMessages {
+    public:
+        // Success messages
         static constexpr auto TASK_ADDED = "Úkol byl přidán!";
         static constexpr auto TASK_REMOVED = "Úkol byl odstraněn!";
         static constexpr auto TASK_COMPLETED = "Úkol byl označen jako dokončený!";
+
+        // Error messages
         static constexpr auto INVALID_TASK_NUMBER = "Neplatné číslo úkolu!";
+        static constexpr auto INVALID_CHOICE = "Neplatná volba! Zkuste to znovu.";
+
+        // Info messages
+        static constexpr auto NO_TASKS = "Žádné úkoly.";
+        static constexpr auto APP_TITLE = "=== TODO APLIKACE ===";
+        static constexpr auto MENU_TITLE = "\n--- MENU ---";
+        static constexpr auto EXITING = "Ukončuji aplikaci...";
+        static constexpr auto TASKS_LIST_TITLE = "\nSeznam úkolů:";
+
+        // Prompts
+        static constexpr auto MENU_PROMPT = "Vyberte možnost (1-5): ";
+        static constexpr auto TASK_TITLE_PROMPT = "Zadejte název úkolu: ";
+        static constexpr auto TASK_INDEX_PROMPT = "Zadejte číslo úkolu: ";
+
+        // Menu options
+        static constexpr auto MENU_SHOW_TASKS = "1. Zobrazit úkoly";
+        static constexpr auto MENU_ADD_TASK = "2. Přidat úkol";
+        static constexpr auto MENU_REMOVE_TASK = "3. Odstranit úkol";
+        static constexpr auto MENU_MARK_DONE = "4. Označit úkol jako dokončený";
+        static constexpr auto MENU_EXIT = "5. Ukončit";
     };
 }
 
@@ -30,7 +54,7 @@ ConsoleUI::ConsoleUI(TaskManager &manager) : manager_(manager) {
 }
 
 void ConsoleUI::run() {
-    std::cout << "=== TODO APLIKACE ===\n";
+    std::cout << UIMessages::APP_TITLE << "\n";
     while (true) {
         showMenu();
         handleUserChoice();
@@ -38,13 +62,13 @@ void ConsoleUI::run() {
 }
 
 void ConsoleUI::showMenu() {
-    std::cout << "\n--- MENU ---\n";
-    std::cout << "1. Zobrazit úkoly\n";
-    std::cout << "2. Přidat úkol\n";
-    std::cout << "3. Odstranit úkol\n";
-    std::cout << "4. Označit úkol jako dokončený\n";
-    std::cout << "5. Ukončit\n";
-    std::cout << "Vyberte možnost (1-5): ";
+    std::cout << UIMessages::MENU_TITLE << "\n";
+    std::cout << UIMessages::MENU_SHOW_TASKS << "\n";
+    std::cout << UIMessages::MENU_ADD_TASK << "\n";
+    std::cout << UIMessages::MENU_REMOVE_TASK << "\n";
+    std::cout << UIMessages::MENU_MARK_DONE << "\n";
+    std::cout << UIMessages::MENU_EXIT << "\n";
+    std::cout << UIMessages::MENU_PROMPT;
 }
 
 void ConsoleUI::handleUserChoice() {
@@ -72,22 +96,22 @@ void ConsoleUI::handleUserChoice() {
 
 void ConsoleUI::handleAddTask() {
     manager_.addTask(promptForNewTaskTitle());
-    notifySuccess(Messages::TASK_ADDED);
+    notifySuccess(UIMessages::TASK_ADDED);
 }
 
 void ConsoleUI::handleRemoveTask() {
     if (manager_.removeTask(promptForTaskIndex())) {
-        notifySuccess(Messages::TASK_REMOVED);
+        notifySuccess(UIMessages::TASK_REMOVED);
     } else {
-        notifyError(Messages::INVALID_TASK_NUMBER);
+        notifyError(UIMessages::INVALID_TASK_NUMBER);
     }
 }
 
 void ConsoleUI::handleMarkDone() {
     if (manager_.markDone(promptForTaskIndex())) {
-        notifySuccess(Messages::TASK_COMPLETED);
+        notifySuccess(UIMessages::TASK_COMPLETED);
     } else {
-        notifyError(Messages::INVALID_TASK_NUMBER);
+        notifyError(UIMessages::INVALID_TASK_NUMBER);
     }
 }
 
@@ -99,12 +123,12 @@ int ConsoleUI::getUserChoice() {
 }
 
 void ConsoleUI::exitApplication() {
-    std::cout << "Ukončuji aplikaci...\n";
+    std::cout << UIMessages::EXITING << "\n";
     std::exit(0);
 }
 
 void ConsoleUI::showInvalidChoiceMessage() {
-    std::cout << "Neplatná volba! Zkuste to znovu.\n";
+    std::cout << UIMessages::INVALID_CHOICE << "\n";
 }
 
 void ConsoleUI::notifySuccess(const std::string &message) {
@@ -121,25 +145,30 @@ void ConsoleUI::notifyError(const std::string &message) {
 
 void ConsoleUI::displayTasks(const std::vector<Task> &tasks) {
     if (tasks.empty()) {
-        std::cout << "Žádné úkoly.\n";
+        std::cout << UIMessages::NO_TASKS << "\n";
         return;
     }
-    std::cout << "\nSeznam úkolů:\n";
+
+    std::cout << UIMessages::TASKS_LIST_TITLE << "\n";
     for (std::size_t i = 0; i < tasks.size(); ++i) {
-        const auto &task = tasks[i];
-        std::cout << i << ". [" << (task.done_ ? "x" : " ") << "] " << task.title_ << "\n";
+        std::cout << formatTaskItem(i, tasks[i]) << "\n";
     }
 }
 
+std::string ConsoleUI::formatTaskItem(std::size_t index, const Task &task) {
+    const char statusChar = task.done_ ? 'x' : ' ';
+    return std::to_string(index) + ". [" + statusChar + "] " + task.title_;
+}
+
 std::string ConsoleUI::promptForNewTaskTitle() {
-    std::cout << "Zadejte název úkolu: ";
+    std::cout << UIMessages::TASK_TITLE_PROMPT;
     std::string title;
     std::getline(std::cin >> std::ws, title);
     return title;
 }
 
 std::size_t ConsoleUI::promptForTaskIndex() {
-    std::cout << "Zadejte číslo úkolu: ";
+    std::cout << UIMessages::TASK_INDEX_PROMPT;
     std::size_t index;
     std::cin >> index;
     std::cin.ignore();
