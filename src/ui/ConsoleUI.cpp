@@ -6,18 +6,20 @@
 #endif
 
 namespace {
-    // Menu opcí
-    constexpr int MENU_SHOW_TASKS = 1;
-    constexpr int MENU_ADD_TASK = 2;
-    constexpr int MENU_REMOVE_TASK = 3;
-    constexpr int MENU_MARK_DONE = 4;
-    constexpr int MENU_EXIT = 5;
+    enum class MenuOption {
+        SHOW_TASKS = 1,
+        ADD_TASK = 2,
+        REMOVE_TASK = 3,
+        MARK_DONE = 4,
+        EXIT = 5
+    };
 
-    // Textové zprávy
-    constexpr auto MSG_TASK_ADDED = "Úkol byl přidán!";
-    constexpr auto MSG_TASK_REMOVED = "Úkol byl odstraněn!";
-    constexpr auto MSG_TASK_COMPLETED = "Úkol byl označen jako dokončený!";
-    constexpr auto MSG_INVALID_TASK_NUMBER = "Neplatné číslo úkolu!";
+    struct Messages {
+        static constexpr auto TASK_ADDED = "Úkol byl přidán!";
+        static constexpr auto TASK_REMOVED = "Úkol byl odstraněn!";
+        static constexpr auto TASK_COMPLETED = "Úkol byl označen jako dokončený!";
+        static constexpr auto INVALID_TASK_NUMBER = "Neplatné číslo úkolu!";
+    };
 }
 
 ConsoleUI::ConsoleUI(TaskManager &manager) : manager_(manager) {
@@ -46,20 +48,20 @@ void ConsoleUI::showMenu() {
 }
 
 void ConsoleUI::handleUserChoice() {
-    switch (int choice = getUserChoice()) {
-        case MENU_SHOW_TASKS:
+    switch (static_cast<MenuOption>(getUserChoice())) {
+        case MenuOption::SHOW_TASKS:
             displayTasks(manager_.tasks());
             break;
-        case MENU_ADD_TASK:
+        case MenuOption::ADD_TASK:
             handleAddTask();
             break;
-        case MENU_REMOVE_TASK:
+        case MenuOption::REMOVE_TASK:
             handleRemoveTask();
             break;
-        case MENU_MARK_DONE:
+        case MenuOption::MARK_DONE:
             handleMarkDone();
             break;
-        case MENU_EXIT:
+        case MenuOption::EXIT:
             exitApplication();
             break;
         default:
@@ -70,22 +72,22 @@ void ConsoleUI::handleUserChoice() {
 
 void ConsoleUI::handleAddTask() {
     manager_.addTask(promptForNewTaskTitle());
-    notifySuccess(MSG_TASK_ADDED);
+    notifySuccess(Messages::TASK_ADDED);
 }
 
 void ConsoleUI::handleRemoveTask() {
     if (manager_.removeTask(promptForTaskIndex())) {
-        notifySuccess(MSG_TASK_REMOVED);
+        notifySuccess(Messages::TASK_REMOVED);
     } else {
-        notifyError(MSG_INVALID_TASK_NUMBER);
+        notifyError(Messages::INVALID_TASK_NUMBER);
     }
 }
 
 void ConsoleUI::handleMarkDone() {
     if (manager_.markDone(promptForTaskIndex())) {
-        notifySuccess(MSG_TASK_COMPLETED);
+        notifySuccess(Messages::TASK_COMPLETED);
     } else {
-        notifyError(MSG_INVALID_TASK_NUMBER);
+        notifyError(Messages::INVALID_TASK_NUMBER);
     }
 }
 
