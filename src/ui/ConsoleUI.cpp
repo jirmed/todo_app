@@ -17,8 +17,15 @@ ConsoleUI::ConsoleUI(TaskManager &manager) : manager_(manager) {
 #endif
 }
 
+namespace {
+    using namespace messages;
+    using std::cout;
+    using std::cin;
+    using std::endl;
+}
+
 void ConsoleUI::run() {
-    std::cout << messages::APP_TITLE << "\n";
+    cout << APP_TITLE << endl;
     while (true) {
         showMenu();
         handleUserChoice();
@@ -26,13 +33,13 @@ void ConsoleUI::run() {
 }
 
 void ConsoleUI::showMenu() {
-    std::cout << messages::MENU_TITLE << "\n";
-    std::cout << messages::MENU_SHOW_TASKS << "\n";
-    std::cout << messages::MENU_ADD_TASK << "\n";
-    std::cout << messages::MENU_REMOVE_TASK << "\n";
-    std::cout << messages::MENU_MARK_DONE << "\n";
-    std::cout << messages::MENU_EXIT << "\n";
-    std::cout << messages::MENU_PROMPT;
+    cout << MENU_TITLE << endl;
+    cout << MENU_SHOW_TASKS << endl;
+    cout << MENU_ADD_TASK << endl;
+    cout << MENU_REMOVE_TASK << endl;
+    cout << MENU_MARK_DONE << endl;
+    cout << MENU_EXIT << endl;
+    cout << MENU_PROMPT;
 }
 
 void ConsoleUI::handleUserChoice() {
@@ -65,66 +72,66 @@ void ConsoleUI::handleUserChoice() {
 
 void ConsoleUI::handleAddTask() {
     manager_.addTask(promptForNewTaskTitle());
-    notifySuccess(messages::TASK_ADDED);
+    notifySuccess(TASK_ADDED);
 }
 
 void ConsoleUI::handleRemoveTask() {
     if (manager_.removeTask(promptForTaskIndex())) {
-        notifySuccess(messages::TASK_REMOVED);
+        notifySuccess(TASK_REMOVED);
     } else {
-        notifyError(messages::INVALID_TASK_NUMBER);
+        notifyError(INVALID_TASK_NUMBER);
     }
 }
 
 void ConsoleUI::handleMarkDone() {
     if (manager_.markDone(promptForTaskIndex())) {
-        notifySuccess(messages::TASK_COMPLETED);
+        notifySuccess(TASK_COMPLETED);
     } else {
-        notifyError(messages::INVALID_TASK_NUMBER);
+        notifyError(INVALID_TASK_NUMBER);
     }
 }
 
 int ConsoleUI::getUserChoice() {
     int choice;
-    if (!(std::cin >> choice)) {
-        std::cin.clear(); // reset error flags
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // vyčistit buffer
+    if (!(cin >> choice)) {
+        cin.clear(); // reset error flags
+        cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // vyčistit buffer
         return -1; // nebo jiná hodnota mimo rozsah
     }
-    std::cin.ignore();
+    cin.ignore();
     return choice;
 }
 
 void ConsoleUI::exitApplication() {
-    std::cout << messages::EXITING << "\n";
+    cout << EXITING << endl;
     std::exit(0);
 }
 
 void ConsoleUI::showInvalidChoiceMessage() {
-    std::cout << messages::INVALID_CHOICE << "\n";
+    cout << INVALID_CHOICE << endl;
 }
 
 void ConsoleUI::notifySuccess(std::string_view message) {
-    std::cout << "[OK] " << message << "\n";
+    cout << "[OK] " << message << endl;
 }
 
 void ConsoleUI::notifyInfo(std::string_view message) {
-    std::cout << "[INFO] " << message << "\n";
+    cout << "[INFO] " << message << endl;
 }
 
 void ConsoleUI::notifyError(std::string_view message) {
-    std::cout << "[CHYBA] " << message << "\n";
+    cout << "[CHYBA] " << message << endl;
 }
 
 void ConsoleUI::displayTasks(const std::vector<Task> &tasks) {
     if (tasks.empty()) {
-        std::cout << messages::NO_TASKS << "\n";
+        cout << NO_TASKS << endl;
         return;
     }
 
-    std::cout << messages::TASKS_LIST_TITLE << "\n";
+    cout << TASKS_LIST_TITLE << endl;
     for (std::size_t i = 0; i < tasks.size(); ++i) {
-        std::cout << formatTaskItem(i, tasks[i]) << "\n";
+        cout << formatTaskItem(i, tasks[i]) << endl;
     }
 }
 
@@ -134,17 +141,17 @@ std::string ConsoleUI::formatTaskItem(std::size_t index, const Task &task) {
 }
 
 std::string ConsoleUI::promptForNewTaskTitle() {
-    std::cout << messages::TASK_TITLE_PROMPT;
+    cout << TASK_TITLE_PROMPT;
     std::string title;
-    std::getline(std::cin >> std::ws, title);
+    std::getline(cin >> std::ws, title);
     return title;
 }
 
 std::size_t ConsoleUI::promptForTaskIndex() {
-    std::cout << messages::TASK_INDEX_PROMPT;
+    cout << TASK_INDEX_PROMPT;
     std::size_t index;
-    std::cin >> index;
-    std::cin.ignore();
+    cin >> index;
+    cin.ignore();
     return index;
 }
 
