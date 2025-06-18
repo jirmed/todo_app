@@ -5,21 +5,32 @@
 
 class ConsoleUI : public UI {
 private:
-    TaskManager& manager_;
+    TaskManager &manager_;
 
 public:
-    explicit ConsoleUI(TaskManager& manager);
-    
+    explicit ConsoleUI(TaskManager &manager);
+
     void run() override;
-    
+
+    // UI interface overrides
+    void notifySuccess(const std::string &message) override;
+
+    void notifyInfo(const std::string &message) override;
+
+    void notifyError(const std::string &message) override;
+
+    void displayTasks(const std::vector<Task> &tasks) override;
+
+    std::string promptForNewTaskTitle() override;
+
+    std::size_t promptForTaskIndex() override;
+
 private:
     static void showMenu();
-    void handleUserChoice() const;
+
+    void handleUserChoice();
 
     static int getUserChoice();
-    void showTasks() const;
-    void addNewTask() const;
-    void removeExistingTask() const;
 
     static void exitApplication();
 

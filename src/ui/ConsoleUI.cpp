@@ -6,7 +6,6 @@
 #include <windows.h>
 #endif
 
-
 ConsoleUI::ConsoleUI(TaskManager &manager) : manager_(manager) {
 #ifdef _WIN32
     SetConsoleCP(CP_UTF8);
@@ -32,18 +31,24 @@ void ConsoleUI::showMenu() {
     std::cout << "Vyberte možnost (1-4): ";
 }
 
-void ConsoleUI::handleUserChoice() const {
-    int choice = getUserChoice();
-    switch (choice) {
+void ConsoleUI::handleUserChoice() {
+    switch (int choice = getUserChoice()) {
         case 1:
-            showTasks();
+            displayTasks(manager_.tasks());
             break;
-        case 2:
-            addNewTask();
+        case 2: {
+            manager_.addTask(promptForNewTaskTitle());
+            notifySuccess("Úkol byl přidán!");
             break;
-        case 3:
-            removeExistingTask();
+        }
+        case 3: {
+            if (manager_.removeTask(promptForTaskIndex())) {
+                notifySuccess("Úkol byl odstraněn!");
+            } else {
+                notifyError("Neplatné číslo úkolu!");
+            }
             break;
+        }
         case 4:
             exitApplication();
             break;
@@ -53,30 +58,11 @@ void ConsoleUI::handleUserChoice() const {
     }
 }
 
-void ConsoleUI::showTasks() const {
-    manager_.printTasks();
-}
-
-void ConsoleUI::addNewTask() const {
-    std::cout << "Zadejte název úkolu: ";
-    std::string title;
-    std::getline(std::cin >> std::ws, title);
-    manager_.addTask(title);
-    std::cout << "Úkol byl přidán!\n";
-}
-
-void ConsoleUI::removeExistingTask() const {
-    manager_.printTasks();
-    std::cout << "Zadejte číslo úkolu k odstranění (začínáme od 1): ";
-    size_t index;
-    std::cin >> index;
+int ConsoleUI::getUserChoice() {
+    int choice;
+    std::cin >> choice;
     std::cin.ignore();
-
-    if (index > 0 && manager_.removeTask(index - 1)) {
-        std::cout << "Úkol byl odstraněn!\n";
-    } else {
-        std::cout << "Neplatné číslo úkolu!\n";
-    }
+    return choice;
 }
 
 void ConsoleUI::exitApplication() {
@@ -88,9 +74,42 @@ void ConsoleUI::showInvalidChoiceMessage() {
     std::cout << "Neplatná volba! Zkuste to znovu.\n";
 }
 
-int ConsoleUI::getUserChoice() {
-    int choice;
-    std::cin >> choice;
+void ConsoleUI::notifySuccess(const std::string &message) {
+    std::cout << "[OK] " << message << "\n";
+}
+
+void ConsoleUI::notifyInfo(const std::string &message) {
+    std::cout << "[INFO] " << message << "\n";
+}
+
+void ConsoleUI::notifyError(const std::string &message) {
+    std::cout << "[CHYBA] " << message << "\n";
+}
+
+void ConsoleUI::displayTasks(const std::vector<Task> &tasks) {
+    if (tasks.empty()) {
+        std::cout << "Žádné úkoly.\n";
+        return;
+    }
+
+    std::cout << "\nSeznam úkolů:\n";
+    for (std::size_t i = 0; i < tasks.size(); ++i) {
+        const auto &task = tasks[i];
+        std::cout << i << ". [" << (task.done_ ? "x" : " ") << "] " << task.title_ << "\n";
+    }
+}
+
+std::string ConsoleUI::promptForNewTaskTitle() {
+    std::cout << "Zadejte název úkolu: ";
+    std::string title;
+    std::getline(std::cin >> std::ws, title);
+    return title;
+}
+
+std::size_t ConsoleUI::promptForTaskIndex() {
+    std::cout << "Zadejte číslo úkolu: ";
+    std::size_t index;
+    std::cin >> index;
     std::cin.ignore();
-    return choice;
+    return index;
 }
