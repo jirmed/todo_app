@@ -22,11 +22,11 @@ public:
     void run() override;
 
     // UI interface overrides
-    void notifySuccess(const std::string &message) override;
+    void notifySuccess(std::string_view message) override;
 
-    void notifyInfo(const std::string &message) override;
+    void notifyInfo(std::string_view message) override;
 
-    void notifyError(const std::string &message) override;
+    void notifyError(std::string_view message) override;
 
     void displayTasks(const std::vector<Task> &tasks) override;
 
