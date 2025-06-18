@@ -24,7 +24,7 @@ namespace {
     using std::endl;
 }
 
-void ConsoleUI::run() {
+[[noreturn]] void ConsoleUI::run() {
     cout << APP_TITLE << endl;
     while (true) {
         showMenu();

@@ -19,7 +19,7 @@ private:
 public:
     explicit ConsoleUI(TaskManager &manager);
 
-    void run() override;
+    [[noreturn]] void run() override;
 
     // UI interface overrides
     void notifySuccess(std::string_view message) override;

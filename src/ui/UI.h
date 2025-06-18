@@ -8,7 +8,7 @@ class UI {
 public:
     virtual ~UI() = default;
 
-    virtual void run() = 0;
+    [[noreturn]] virtual void run() = 0;
 
     // Informace o úspěchu či obecná informace
     virtual void notifySuccess(std::string_view message) = 0;
