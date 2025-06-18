@@ -27,8 +27,9 @@ void ConsoleUI::showMenu() {
     std::cout << "1. Zobrazit úkoly\n";
     std::cout << "2. Přidat úkol\n";
     std::cout << "3. Odstranit úkol\n";
-    std::cout << "4. Ukončit\n";
-    std::cout << "Vyberte možnost (1-4): ";
+    std::cout << "4. Označit úkol jako dokončený\n";
+    std::cout << "5. Ukončit\n";
+    std::cout << "Vyberte možnost (1-5): ";
 }
 
 void ConsoleUI::handleUserChoice() {
@@ -48,8 +49,15 @@ void ConsoleUI::handleUserChoice() {
                 notifyError("Neplatné číslo úkolu!");
             }
             break;
+        }case 4: {
+            if (manager_.markDone(promptForTaskIndex())) {
+                notifySuccess("Úkol byl označen jako dokončený!");
+            } else {
+                notifyError("Neplatné číslo úkolu!");
+            }
+            break;
         }
-        case 4:
+        case 5:
             exitApplication();
             break;
         default:

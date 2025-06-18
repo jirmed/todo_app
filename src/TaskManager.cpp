@@ -15,3 +15,11 @@ bool TaskManager::removeTask(std::size_t index) {
     tasks_.erase(tasks_.begin() + index);
     return true;
 }
+
+bool TaskManager::markDone(std::size_t index) {
+    if (index < 0 || index >= tasks_.size()) {
+        return false;
+    }
+    tasks_[index].done_ = true;
+    return true;
+}
