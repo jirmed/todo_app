@@ -19,7 +19,17 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(json)
 
+# 📦 Asio (nutné pro Crow)
+FetchContent_Declare(
+        asio
+        GIT_REPOSITORY https://github.com/chriskohlhoff/asio.git
+        GIT_TAG asio-1-28-1
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+)
+FetchContent_MakeAvailable(asio)
 # 📦 Crow v1.2.1.2
+
+
 FetchContent_Declare(
         crow
         GIT_REPOSITORY https://github.com/CrowCpp/crow.git
@@ -47,6 +57,7 @@ target_include_directories(core PUBLIC src)
 
 # 🔧 Aplikační binárka
 add_executable(app src/main.cpp)
+
 target_link_libraries(app
         PRIVATE
         core
@@ -54,9 +65,22 @@ target_link_libraries(app
         nlohmann_json::nlohmann_json
 )
 
-target_include_directories(app
-        PRIVATE
+# Link only on Windows
+if(WIN32)
+    target_link_libraries(app
+            PRIVATE
+            ws2_32
+            mswsock
+    )
+endif()
+
+# Link only on Windows
+
+target_include_directories(core
+        PUBLIC
+        src
         ${crow_SOURCE_DIR}/include
+        ${asio_SOURCE_DIR}/asio/include
 )
 
 # 🧪 Testy (s tvým vlastním main)
