@@ -1,8 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
 
-# Nastavení politiky kvůli Boost
-cmake_policy(SET CMP0167 NEW)
-
 project(todo_app)
 
 set(CMAKE_CXX_STANDARD 23)
@@ -19,7 +16,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(json)
 
-# 📦 Asio (nutné pro Crow)
+# 📦 Asio (standalone)
 FetchContent_Declare(
         asio
         GIT_REPOSITORY https://github.com/chriskohlhoff/asio.git
@@ -27,15 +24,33 @@ FetchContent_Declare(
         DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
 FetchContent_MakeAvailable(asio)
-# 📦 Crow v1.2.1.2
 
+# Nastavení ASIO_INCLUDE_DIR pro FindAsio.cmake modul v Crow
+set(ASIO_INCLUDE_DIR ${asio_SOURCE_DIR}/asio/include)
+set(ASIO_FOUND TRUE)
 
+# Vytvoření asio::asio targetu pro případ, že ho Crow nenalezne
+if(NOT TARGET asio::asio)
+    add_library(asio::asio INTERFACE IMPORTED)
+    target_include_directories(asio::asio INTERFACE ${ASIO_INCLUDE_DIR})
+    target_compile_definitions(asio::asio INTERFACE ASIO_STANDALONE)
+    find_package(Threads REQUIRED)
+    target_link_libraries(asio::asio INTERFACE Threads::Threads)
+endif()
+
+# 📦 Crow framework
 FetchContent_Declare(
         crow
         GIT_REPOSITORY https://github.com/CrowCpp/crow.git
         GIT_TAG v1.2.1.2
         DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
+
+# Nastavení proměnných pro Crow před jeho načtením
+set(CROW_USE_BOOST OFF CACHE BOOL "Use Boost instead of standalone asio" FORCE)
+set(CROW_BUILD_TESTS OFF CACHE BOOL "Build Crow tests" FORCE)
+set(CROW_BUILD_EXAMPLES OFF CACHE BOOL "Build Crow examples" FORCE)
+
 FetchContent_MakeAvailable(crow)
 
 # 📦 GoogleTest
@@ -44,25 +59,33 @@ FetchContent_Declare(
         URL https://github.com/google/googletest/archive/refs/heads/main.zip
         DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
-set(INSTALL_GTEST OFF)
+set(INSTALL_GTEST OFF CACHE BOOL "Install GoogleTest" FORCE)
+set(BUILD_GMOCK OFF CACHE BOOL "Build GoogleMock" FORCE)
 FetchContent_MakeAvailable(googletest)
 
-# 📦 Boost (předpokládá se nainstalovaný v systému)
-find_package(Boost REQUIRED COMPONENTS system)
-
-# 📦 Základní logika aplikace jako knihovna
+# 📚 Core knihovna
 file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS src/*.cpp src/*.h)
+list(FILTER SRC_FILES EXCLUDE REGEX ".*main\\.cpp$")
 add_library(core ${SRC_FILES})
-target_include_directories(core PUBLIC src)
 
-# Přidání linkování nlohmann_json k core knihovně
+target_include_directories(core
+        PUBLIC
+        src
+        ${ASIO_INCLUDE_DIR}
+)
+
 target_link_libraries(core
         PUBLIC
         nlohmann_json::nlohmann_json
-        Boost::system
+        Crow::Crow
 )
 
-# Link only on Windows pro core
+target_compile_definitions(core
+        PUBLIC
+        ASIO_STANDALONE
+)
+
+# Linkování Windows specifických knihoven
 if(WIN32)
     target_link_libraries(core
             PUBLIC
@@ -71,30 +94,20 @@ if(WIN32)
     )
 endif()
 
-target_include_directories(core
-        PUBLIC
-        src
-        ${crow_SOURCE_DIR}/include
-        ${asio_SOURCE_DIR}/asio/include
-)
-
-# 🔧 Aplikační binárka
+# 🔧 Hlavní aplikace
 add_executable(app src/main.cpp)
+target_link_libraries(app PRIVATE core)
 
-target_link_libraries(app
-        PRIVATE
-        core
-)
-
-# 🧪 Testy (s tvým vlastním main)
+# 🧪 Testy
 file(GLOB_RECURSE TEST_FILES CONFIGURE_DEPENDS tests/*.cpp)
 add_executable(tests ${TEST_FILES})
 target_link_libraries(tests
         PRIVATE
         core
-        gtest
+        gtest_main
 )
 
+# Povolení testování
 include(GoogleTest)
 enable_testing()
 gtest_discover_tests(tests)
