@@ -55,32 +55,35 @@ file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS src/*.cpp src/*.h)
 add_library(core ${SRC_FILES})
 target_include_directories(core PUBLIC src)
 
-# 🔧 Aplikační binárka
-add_executable(app src/main.cpp)
-
-target_link_libraries(app
-        PRIVATE
-        core
-        Boost::system
+# Přidání linkování nlohmann_json k core knihovně
+target_link_libraries(core
+        PUBLIC
         nlohmann_json::nlohmann_json
+        Boost::system
 )
 
-# Link only on Windows
+# Link only on Windows pro core
 if(WIN32)
-    target_link_libraries(app
-            PRIVATE
+    target_link_libraries(core
+            PUBLIC
             ws2_32
             mswsock
     )
 endif()
-
-# Link only on Windows
 
 target_include_directories(core
         PUBLIC
         src
         ${crow_SOURCE_DIR}/include
         ${asio_SOURCE_DIR}/asio/include
+)
+
+# 🔧 Aplikační binárka
+add_executable(app src/main.cpp)
+
+target_link_libraries(app
+        PRIVATE
+        core
 )
 
 # 🧪 Testy (s tvým vlastním main)

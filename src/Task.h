@@ -3,6 +3,7 @@
 
 
 struct Task {
+    int id_ = -1;
     std::string title_;
     bool done_ = false;
 

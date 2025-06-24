@@ -51,7 +51,7 @@ void ConsoleUI::handleUserChoice() {
     if (const auto opt = toMenuOption(choice)) {
         switch (*opt) {
             case MenuOption::SHOW_TASKS:
-                displayTasks(manager_.tasks());
+                displayTasks(manager_.getAllTasks());
                 break;
             case MenuOption::ADD_TASK:
                 handleAddTask();

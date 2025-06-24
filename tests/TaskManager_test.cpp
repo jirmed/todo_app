@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
 TEST_F(TaskManagerTest, AddTask_AddsTaskToCollection) {
     taskManager.addTask("Test Task");
 
-    EXPECT_EQ(1, taskManager.tasks().size());
+    EXPECT_EQ(1, taskManager.getAllTasks().size());
 }
 
 TEST_F(TaskManagerTest, RemoveTask_ValidIndex_RemovesTaskAndReturnsTrue) {
@@ -24,7 +24,7 @@ TEST_F(TaskManagerTest, RemoveTask_ValidIndex_RemovesTaskAndReturnsTrue) {
     bool result = taskManager.removeTask(0);
 
     EXPECT_TRUE(result);
-    EXPECT_EQ(1, taskManager.tasks().size());
+    EXPECT_EQ(1, taskManager.getAllTasks().size());
 
 }
 
@@ -34,5 +34,5 @@ TEST_F(TaskManagerTest, RemoveTask_InvalidIndex_ReturnsFalse) {
     bool result = taskManager.removeTask(999);
 
     EXPECT_FALSE(result);
-    EXPECT_EQ(1, taskManager.tasks().size());
+    EXPECT_EQ(1, taskManager.getAllTasks().size());
 }

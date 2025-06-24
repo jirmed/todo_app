@@ -1,8 +1,7 @@
 #pragma once
 #include <vector>
-
+#include <string_view>
 #include "Task.h"
-
 
 class TaskManager {
 public:
@@ -10,11 +9,11 @@ public:
     bool removeTask(std::size_t index);
     bool markDone(std::size_t index);
 
-private:
-    std::vector<Task> tasks_;
-
-public:
-    [[nodiscard]] std::vector<Task> tasks() const {
+    [[nodiscard]] const std::vector<Task>& getAllTasks() const {
         return tasks_;
     }
+
+
+private:
+    std::vector<Task> tasks_;
 };
