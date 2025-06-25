@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "RestServer.h"
+#include "UpdateTaskDto.h"
 
 class RestServer {
 private:
@@ -30,6 +31,8 @@ private:
     crow::response handleRemoveTask(int id);
 
     crow::response handleUpdateTask(const crow::request &req, int id);
+
+    crow::response processTaskUpdate(const UpdateTaskDto &dto, int id);
 
 public:
     explicit RestServer(TaskManager &manager);
