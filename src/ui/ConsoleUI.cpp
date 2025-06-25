@@ -1,172 +1,179 @@
 #include "ConsoleUI.h"
-#include "Messages.h"
 #include <iostream>
-#include <string>
 #include <limits>
-#include <optional>
 
 #ifdef _WIN32
 #include <windows.h>
+#include <io.h>
+#include <fcntl.h>
 #endif
 
 ConsoleUI::ConsoleUI(TaskManager& manager) : manager_(manager) {
 #ifdef _WIN32
+    // Nastavení UTF-8 pro Windows
     SetConsoleCP(CP_UTF8);
     SetConsoleOutputCP(CP_UTF8);
+    // Nepoužíváme _O_U8TEXT, protože může způsobit problémy s std::cout
+    // _setmode(_fileno(stdout), _O_U8TEXT);
+    // _setmode(_fileno(stdin), _O_U8TEXT);
 #endif
 }
 
-namespace {
-    using messages::get;
-    using messages::MessageKey;
-    using enum MessageKey;  // umožní používat např. APP_TITLE místo MessageKey::APP_TITLE
-    using std::cout;
-    using std::cin;
-    using std::endl;
-
-    // Alias pro get() pro zkrácení zápisu
-    auto t = [](MessageKey key) { return get(key); };
-}
-
-[[noreturn]] void ConsoleUI::run() {
-    cout << t(APP_TITLE) << endl;
-    while (true) {
-        showMenu();
-        handleUserChoice();
-    }
-}
-
-void ConsoleUI::showMenu() {
-    cout << t(MENU_TITLE) << endl;
-    cout << t(MENU_SHOW_TASKS) << endl;
-    cout << t(MENU_ADD_TASK) << endl;
-    cout << t(MENU_REMOVE_TASK) << endl;
-    cout << t(MENU_MARK_DONE) << endl;
-    cout << t(MENU_EXIT) << endl;
-    cout << t(MENU_PROMPT);
-}
-
-void ConsoleUI::handleUserChoice() {
-    int choice = getUserChoice();
-    if (const auto opt = toMenuOption(choice)) {
-        switch (*opt) {
-            case MenuOption::SHOW_TASKS:
-                displayTasks(manager_.getAllTasks());
+void ConsoleUI::run() {
+    printMessage(messages::MessageKey::APP_TITLE);
+    
+    int choice;
+    do {
+        printMenu();
+        choice = getMenuChoice();
+        
+        switch (choice) {
+            case 1:
+                handleShowTasks();
                 break;
-            case MenuOption::ADD_TASK:
+            case 2:
                 handleAddTask();
                 break;
-            case MenuOption::REMOVE_TASK:
+            case 3:
                 handleRemoveTask();
                 break;
-            case MenuOption::MARK_DONE:
+            case 4:
                 handleMarkDone();
                 break;
-            case MenuOption::EXIT:
-                exitApplication();
+            case 5:
+                printMessage(messages::MessageKey::EXITING);
                 break;
             default:
-                showInvalidChoiceMessage();
+                printMessage(messages::MessageKey::INVALID_CHOICE);
                 break;
         }
-    } else {
-        showInvalidChoiceMessage();
-    }
-}
-
-void ConsoleUI::handleAddTask() {
-    manager_.addTask(promptForNewTaskTitle());
-    notifySuccess(t(TASK_ADDED));
-}
-
-void ConsoleUI::handleRemoveTask() {
-    if (manager_.removeTask(promptForTaskIndex())) {
-        notifySuccess(t(TASK_REMOVED));
-    } else {
-        notifyError(t(INVALID_TASK_NUMBER));
-    }
-}
-
-void ConsoleUI::handleMarkDone() {
-    if (manager_.markDone(promptForTaskIndex())) {
-        notifySuccess(t(TASK_COMPLETED));
-    } else {
-        notifyError(t(INVALID_TASK_NUMBER));
-    }
-}
-
-int ConsoleUI::getUserChoice() {
-    int choice;
-    if (!(cin >> choice)) {
-        cin.clear();
-        cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        return -1;
-    }
-    cin.ignore();
-    return choice;
-}
-
-void ConsoleUI::exitApplication() {
-    cout << t(EXITING) << endl;
-    std::exit(0);
-}
-
-void ConsoleUI::showInvalidChoiceMessage() {
-    cout << t(INVALID_CHOICE) << endl;
+    } while (choice != 5);
 }
 
 void ConsoleUI::notifySuccess(std::string_view message) {
-    cout << "[OK] " << message << endl;
+    std::cout << "[ÚSPĚCH] " << message << std::endl;
 }
 
 void ConsoleUI::notifyInfo(std::string_view message) {
-    cout << "[INFO] " << message << endl;
+    std::cout << "[INFO] " << message << std::endl;
 }
 
 void ConsoleUI::notifyError(std::string_view message) {
-    cout << "[CHYBA] " << message << endl;
+    std::cout << "[CHYBA] " << message << std::endl;
 }
 
 void ConsoleUI::displayTasks(const std::vector<Task>& tasks) {
     if (tasks.empty()) {
-        cout << t(NO_TASKS) << endl;
+        printMessage(messages::MessageKey::NO_TASKS);
         return;
     }
-
-    cout << t(TASKS_LIST_TITLE) << endl;
-    for (std::size_t i = 0; i < tasks.size(); ++i) {
-        cout << formatTaskLine(i, tasks[i]) << endl;
+    
+    printMessage(messages::MessageKey::TASKS_LIST_TITLE);
+    for (const auto& task : tasks) {
+        std::cout << "ID: " << task.id_ << " - " << task.title_;
+        if (task.done_) {
+            std::cout << " [DOKONČENO]";
+        }
+        std::cout << std::endl;
     }
-}
-
-std::string ConsoleUI::formatTaskLine(std::size_t index, const Task& task) {
-    const char statusChar = task.done_ ? 'x' : ' ';
-    return std::to_string(index) + ". [" + statusChar + "] " + task.title_;
 }
 
 std::string ConsoleUI::promptForNewTaskTitle() {
-    cout << t(TASK_TITLE_PROMPT);
     std::string title;
-    std::getline(cin >> std::ws, title);
+    std::cout << messages::get(messages::MessageKey::TASK_TITLE_PROMPT);
+    std::getline(std::cin, title);
     return title;
 }
 
 std::size_t ConsoleUI::promptForTaskIndex() {
-    cout << t(TASK_INDEX_PROMPT);
-    std::size_t index;
-    cin >> index;
-    cin.ignore();
-    return index;
+    std::size_t taskId;
+    std::cout << messages::get(messages::MessageKey::TASK_INDEX_PROMPT);
+    
+    while (!(std::cin >> taskId)) {
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        notifyError("Neplatné ID úkolu!");
+        std::cout << messages::get(messages::MessageKey::TASK_INDEX_PROMPT);
+    }
+    
+    std::cin.ignore(); // Vyčistit buffer
+    return taskId;
 }
 
-std::optional<MenuOption> ConsoleUI::toMenuOption(int value) {
-    using enum MenuOption;
-    switch (value) {
-        case 1: return SHOW_TASKS;
-        case 2: return ADD_TASK;
-        case 3: return REMOVE_TASK;
-        case 4: return MARK_DONE;
-        case 5: return EXIT;
-        default: return std::nullopt;
+void ConsoleUI::printMenu() {
+    printMessage(messages::MessageKey::MENU_TITLE);
+    printMessage(messages::MessageKey::MENU_SHOW_TASKS);
+    printMessage(messages::MessageKey::MENU_ADD_TASK);
+    printMessage(messages::MessageKey::MENU_REMOVE_TASK);
+    printMessage(messages::MessageKey::MENU_MARK_DONE);
+    printMessage(messages::MessageKey::MENU_EXIT);
+}
+
+int ConsoleUI::getMenuChoice() {
+    int choice;
+    std::cout << messages::get(messages::MessageKey::MENU_PROMPT);
+    
+    while (!(std::cin >> choice)) {
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        printMessage(messages::MessageKey::INVALID_CHOICE);
+        std::cout << messages::get(messages::MessageKey::MENU_PROMPT);
     }
+    
+    std::cin.ignore(); // Vyčistit buffer
+    return choice;
+}
+
+void ConsoleUI::handleShowTasks() {
+    const auto& tasks = manager_.getAllTasks();
+    displayTasks(tasks);
+}
+
+void ConsoleUI::handleAddTask() {
+    std::string title = promptForNewTaskTitle();
+    
+    if (!title.empty()) {
+        manager_.addTask(title);
+        notifySuccess(messages::get(messages::MessageKey::TASK_ADDED));
+    }
+}
+
+void ConsoleUI::handleRemoveTask() {
+    const auto& tasks = manager_.getAllTasks();
+    if (tasks.empty()) {
+        notifyInfo(messages::get(messages::MessageKey::NO_TASKS));
+        return;
+    }
+    
+    displayTasks(tasks); // Zobrazí úkoly s ID
+    
+    std::size_t taskId = promptForTaskIndex();
+    
+    if (manager_.removeTaskById(taskId)) {
+        notifySuccess(messages::get(messages::MessageKey::TASK_REMOVED));
+    } else {
+        notifyError(messages::get(messages::MessageKey::INVALID_TASK_NUMBER));
+    }
+}
+
+void ConsoleUI::handleMarkDone() {
+    const auto& tasks = manager_.getAllTasks();
+    if (tasks.empty()) {
+        notifyInfo(messages::get(messages::MessageKey::NO_TASKS));
+        return;
+    }
+    
+    displayTasks(tasks); // Zobrazí úkoly s ID
+    
+    std::size_t taskId = promptForTaskIndex();
+    
+    if (manager_.markDoneById(taskId)) {
+        notifySuccess(messages::get(messages::MessageKey::TASK_COMPLETED));
+    } else {
+        notifyError(messages::get(messages::MessageKey::INVALID_TASK_NUMBER));
+    }
+}
+
+void ConsoleUI::printMessage(messages::MessageKey key) {
+    std::cout << messages::get(key) << std::endl;
 }

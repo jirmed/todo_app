@@ -3,7 +3,7 @@ X(TASK_ADDED, "Úkol byl přidán!")
 X(TASK_REMOVED, "Úkol byl odstraněn!")
 X(TASK_COMPLETED, "Úkol byl označen jako dokončený!")
 
-X(INVALID_TASK_NUMBER, "Neplatné číslo úkolu!")
+X(INVALID_TASK_NUMBER, "Neplatné ID úkolu!")
 X(INVALID_CHOICE, "Neplatná volba! Zkuste to znovu.")
 
 X(NO_TASKS, "Žádné úkoly.")
@@ -14,7 +14,7 @@ X(TASKS_LIST_TITLE, "\nSeznam úkolů:")
 
 X(MENU_PROMPT, "Vyberte možnost (1-5): ")
 X(TASK_TITLE_PROMPT, "Zadejte název úkolu: ")
-X(TASK_INDEX_PROMPT, "Zadejte číslo úkolu: ")
+X(TASK_INDEX_PROMPT, "Zadejte ID úkolu: ")
 
 X(MENU_SHOW_TASKS, "1. Zobrazit úkoly")
 X(MENU_ADD_TASK, "2. Přidat úkol")

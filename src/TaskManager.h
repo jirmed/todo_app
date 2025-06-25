@@ -8,13 +8,16 @@ public:
     void addTask(std::string_view title);
     bool removeTask(std::size_t index);
     bool markDone(std::size_t index);
+    
+    // Nové metody pro práci s ID
+    bool markDoneById(std::size_t id);
+    bool removeTaskById(std::size_t id);
 
     bool isValidIndex(std::size_t index) const;
 
     [[nodiscard]] const std::vector<Task>& getAllTasks() const {
         return tasks_;
     }
-
 
 private:
     std::vector<Task> tasks_;
