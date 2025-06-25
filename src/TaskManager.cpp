@@ -1,5 +1,4 @@
 #include "TaskManager.h"
-
 #include <iostream>
 #include <bits/ostream.tcc>
 
@@ -8,9 +7,8 @@ void TaskManager::addTask(std::string_view title) {
     tasks_.back().id_ = nextId_++;
 }
 
-
 bool TaskManager::removeTask(std::size_t index) {
-    if (index < 0 || index >= tasks_.size()) {
+    if (!isValidIndex(index)) {
         return false;
     }
     tasks_.erase(tasks_.begin() + index);
@@ -18,9 +16,13 @@ bool TaskManager::removeTask(std::size_t index) {
 }
 
 bool TaskManager::markDone(std::size_t index) {
-    if (index < 0 || index >= tasks_.size()) {
+    if (!isValidIndex(index)) {
         return false;
     }
     tasks_[index].done_ = true;
     return true;
+}
+
+bool TaskManager::isValidIndex(std::size_t index) const {
+    return index < tasks_.size();
 }

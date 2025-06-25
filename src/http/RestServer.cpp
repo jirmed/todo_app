@@ -18,11 +18,16 @@ RestServer::RestServer(TaskManager &manager) : manager_(manager) {
     _setmode(_fileno(stdout), _O_U8TEXT);
     _setmode(_fileno(stdin), _O_U8TEXT);
 #endif
-}
-
+} // RestServer.cpp
 void RestServer::run() {
     crow::SimpleApp app;
 
+    setupRoutes(app);
+
+    app.port(18080).run();
+}
+
+void RestServer::setupRoutes(crow::SimpleApp &app) {
     CROW_ROUTE(app, "/getAllTasks").methods(crow::HTTPMethod::GET)([this]() {
         return handleGetAllTasks();
     });
@@ -30,8 +35,6 @@ void RestServer::run() {
     CROW_ROUTE(app, "/addTask").methods(crow::HTTPMethod::POST)([this](const crow::request &req) {
         return handleAddTask(req);
     });
-
-    app.port(18080).run();
 }
 
 crow::response RestServer::handleGetAllTasks() {
@@ -44,7 +47,7 @@ crow::response RestServer::handleAddTask(const crow::request &req) {
     try {
         const auto json = nlohmann::json::parse(req.body);
         const CreateTaskDto dto = json.get<CreateTaskDto>();
-        
+
         manager_.addTask(dto.title);
         return createTextResponse(201, "Task created successfully");
     } catch (const nlohmann::json::exception &e) {
@@ -56,12 +59,12 @@ crow::response RestServer::handleAddTask(const crow::request &req) {
 
 nlohmann::json RestServer::convertTasksToJson(const std::vector<Task> &tasks) {
     nlohmann::json jsonResponse = nlohmann::json::array();
-    
+
     for (const auto &task: tasks) {
         const auto dto = TaskMapper::toDto(task);
         jsonResponse.push_back(dto);
     }
-    
+
     return jsonResponse;
 }
 

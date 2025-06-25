@@ -9,6 +9,8 @@ public:
     bool removeTask(std::size_t index);
     bool markDone(std::size_t index);
 
+    bool isValidIndex(std::size_t index) const;
+
     [[nodiscard]] const std::vector<Task>& getAllTasks() const {
         return tasks_;
     }

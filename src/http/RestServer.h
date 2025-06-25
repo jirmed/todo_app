@@ -5,6 +5,8 @@
 #include <nlohmann/json.hpp>
 #include <vector>
 
+#include "RestServer.h"
+
 class RestServer {
 private:
     static constexpr const char *JSON_CONTENT_TYPE = "application/json; charset=utf-8";
@@ -29,4 +31,6 @@ public:
     explicit RestServer(TaskManager &manager);
 
     void run();
+
+    void setupRoutes(crow::SimpleApp &app);
 };
