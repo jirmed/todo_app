@@ -6,13 +6,29 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Optimalizace podle kompileru a build typu
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    if(MSVC)
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Od")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")  # Paralelní build pro MSVC
+        set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} /INCREMENTAL")
+    else()
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O1")
+    endif()
+    set(BUILD_SHARED_LIBS ON)
+endif()
+
 include(FetchContent)
+
+# Cachování závislostí
+set(FETCHCONTENT_QUIET OFF)
+set(FETCHCONTENT_BASE_DIR "${CMAKE_BINARY_DIR}/_deps" CACHE PATH "FetchContent base directory")
 
 # 📦 nlohmann::json
 FetchContent_Declare(
-        json
-        URL https://github.com/nlohmann/json/releases/download/v3.11.2/json.tar.xz
-        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    json
+    URL https://github.com/nlohmann/json/releases/download/v3.11.2/json.tar.xz
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
 FetchContent_MakeAvailable(json)
 
@@ -67,6 +83,19 @@ FetchContent_MakeAvailable(googletest)
 file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS src/*.cpp src/*.h)
 list(FILTER SRC_FILES EXCLUDE REGEX ".*main\\.cpp$")
 add_library(core ${SRC_FILES})
+
+# Precompiled headers pro rychlejší kompilaci
+target_precompile_headers(core
+    PUBLIC
+    <iostream>
+    <string>
+    <vector>
+    <memory>
+    <unordered_map>
+    <map>
+    <algorithm>
+    <nlohmann/json.hpp>
+)
 
 target_include_directories(core
         PUBLIC
