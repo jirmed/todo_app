@@ -1,9 +1,9 @@
-// RestServer.cpp
 #include "RestServer.h"
 #include <crow.h>
 #include <nlohmann/json.hpp>
 #include "TaskMapper.h"
 #include "TaskDto.h"
+#include "CreateTaskDto.h"  // Přidejte tento include
 #ifdef _WIN32
 #include <windows.h>
 #include <io.h>
@@ -43,31 +43,25 @@ crow::response RestServer::handleGetAllTasks() {
 crow::response RestServer::handleAddTask(const crow::request &req) {
     try {
         const auto json = nlohmann::json::parse(req.body);
-
-        if (!json.contains("title")) {
-            return createTextResponse(400, "Missing 'title' field");
-        }
-
-        const std::string title = json["title"];
-        manager_.addTask(title);
-
+        const CreateTaskDto dto = json.get<CreateTaskDto>();
+        
+        manager_.addTask(dto.title);
         return createTextResponse(201, "Task created successfully");
+    } catch (const nlohmann::json::exception &e) {
+        return createTextResponse(400, "Invalid JSON format or missing required fields");
     } catch (const std::exception &e) {
-        return createTextResponse(400, "Invalid JSON format");
+        return createTextResponse(500, "Internal server error");
     }
 }
 
 nlohmann::json RestServer::convertTasksToJson(const std::vector<Task> &tasks) {
     nlohmann::json jsonResponse = nlohmann::json::array();
-
+    
     for (const auto &task: tasks) {
         const auto dto = TaskMapper::toDto(task);
-        nlohmann::json taskJson;
-        taskJson["title"] = dto.title;
-        taskJson["done"] = dto.completed;
-        jsonResponse.push_back(taskJson);
+        jsonResponse.push_back(dto);
     }
-
+    
     return jsonResponse;
 }
 

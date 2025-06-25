@@ -8,6 +8,6 @@ struct TaskMapper {
     }
 
     static Task fromDto(const TaskDto& dto) {
-        return Task(dto.title, dto.completed);
+        return Task(dto.title, dto.done);
     }
 };
