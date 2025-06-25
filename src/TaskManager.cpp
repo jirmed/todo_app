@@ -5,6 +5,7 @@
 
 void TaskManager::addTask(std::string_view title) {
     tasks_.emplace_back(std::string(title));
+    tasks_.back().id_ = nextId_++;
 }
 
 

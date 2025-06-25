@@ -16,4 +16,5 @@ public:
 
 private:
     std::vector<Task> tasks_;
+    std::size_t nextId_ = 1;
 };
