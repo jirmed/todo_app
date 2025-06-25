@@ -6,10 +6,6 @@
 class TaskManager {
 public:
     void addTask(std::string_view title);
-    bool removeTask(std::size_t index);
-    bool markDone(std::size_t index);
-    
-    // Nové metody pro práci s ID
     bool markDoneById(std::size_t id);
     bool removeTaskById(std::size_t id);
 

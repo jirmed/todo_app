@@ -8,22 +8,6 @@ void TaskManager::addTask(std::string_view title) {
     tasks_.back().id_ = nextId_++;
 }
 
-bool TaskManager::removeTask(std::size_t index) {
-    if (!isValidIndex(index)) {
-        return false;
-    }
-    tasks_.erase(tasks_.begin() + index);
-    return true;
-}
-
-bool TaskManager::markDone(std::size_t index) {
-    if (!isValidIndex(index)) {
-        return false;
-    }
-    tasks_[index].done_ = true;
-    return true;
-}
-
 bool TaskManager::markDoneById(std::size_t id) {
     auto it = std::find_if(tasks_.begin(), tasks_.end(), 
                           [id](const Task& task) { return task.id_ == id; });
