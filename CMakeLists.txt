@@ -15,7 +15,8 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     else()
         set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O1")
     endif()
-    set(BUILD_SHARED_LIBS ON)
+    # Ponecháme statické linkování pro konzistenci
+    set(BUILD_SHARED_LIBS OFF)
 endif()
 
 include(FetchContent)
@@ -69,7 +70,7 @@ set(CROW_BUILD_EXAMPLES OFF CACHE BOOL "Build Crow examples" FORCE)
 
 FetchContent_MakeAvailable(crow)
 
-# 📦 GoogleTest
+# 📦 GoogleTest - explicitně nastavíme statické linkování
 FetchContent_Declare(
         googletest
         URL https://github.com/google/googletest/archive/refs/heads/main.zip
@@ -77,12 +78,13 @@ FetchContent_Declare(
 )
 set(INSTALL_GTEST OFF CACHE BOOL "Install GoogleTest" FORCE)
 set(BUILD_GMOCK OFF CACHE BOOL "Build GoogleMock" FORCE)
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
-# 📚 Core knihovna
+# 📚 Core knihovna - změníme na statickou
 file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS src/*.cpp src/*.h)
 list(FILTER SRC_FILES EXCLUDE REGEX ".*main\\.cpp$")
-add_library(core ${SRC_FILES})
+add_library(core STATIC ${SRC_FILES})
 
 # Precompiled headers pro rychlejší kompilaci
 target_precompile_headers(core
@@ -134,7 +136,30 @@ target_link_libraries(tests
         PRIVATE
         core
         gtest_main
+        gtest
 )
+
+# Zajištění správného runtime pro Windows
+if(WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set_target_properties(tests PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+    )
+    
+    # Kopírování potřebných DLL souborů do výstupního adresáře
+    add_custom_command(TARGET tests POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        $<TARGET_FILE:gtest>
+        $<TARGET_FILE_DIR:tests>
+        COMMENT "Copying gtest DLL to test directory"
+    )
+    
+    add_custom_command(TARGET tests POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        $<TARGET_FILE:gtest_main>
+        $<TARGET_FILE_DIR:tests>
+        COMMENT "Copying gtest_main DLL to test directory"
+    )
+endif()
 
 # Povolení testování
 include(GoogleTest)
