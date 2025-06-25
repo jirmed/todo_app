@@ -27,6 +27,10 @@ private:
     // Konverzní metody
     nlohmann::json convertTasksToJson(const std::vector<Task> &tasks);
 
+    crow::response handleRemoveTask(int id);
+
+    crow::response handleUpdateTask(const crow::request &req, int id);
+
 public:
     explicit RestServer(TaskManager &manager);
 
