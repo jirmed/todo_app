@@ -18,12 +18,13 @@ protected:
 
 TEST_F(RestServerTest, InitializesWithValidTaskManager) {
     // Test pouze ověří, že se objekt vytváří bez problémů
+    // ReSharper disable once CppDeclaratorNeverUsed
     EXPECT_NO_THROW(RestServer server(taskManager));
 }
 
 TEST_F(RestServerTest, HandleGetAllTasks_ReturnsEmptyArrayWhenNoTasks) {
     // Test GET /tasks s prázdným seznamem
-    auto response = restServer.testHandleGetAllTasks();
+    const auto response = restServer.testHandleGetAllTasks();
     EXPECT_EQ(200, response.code);
     EXPECT_TRUE(response.body.find("[]") != std::string::npos);
 }
@@ -61,16 +62,15 @@ TEST_F(RestServerTest, HandleRemoveTask_ValidId_ReturnsOk) {
     taskManager.addTask("Task to Remove");
     const auto& tasks = taskManager.getAllTasks();
     ASSERT_FALSE(tasks.empty());
-    
-    int taskId = static_cast<int>(tasks[0].id_);
+
+    const int taskId = static_cast<int>(tasks[0].id_);
     auto response = restServer.testHandleRemoveTask(taskId);
     EXPECT_EQ(200, response.code);
 }
 
 TEST_F(RestServerTest, HandleRemoveTask_InvalidId_ReturnsNotFound) {
     // Test odstranění neexistujícího úkolu
-    auto response = restServer.testHandleRemoveTask(999);
+    const auto response = restServer.testHandleRemoveTask(999);
     EXPECT_EQ(404, response.code);
 }
 
-// Nepoužíváme vlastní main funkci, protože používáme gtest_main

@@ -20,22 +20,17 @@ private:
 
     // Helper metody pro zpracování požadavků
     crow::response handleGetAllTasks();
-
     crow::response handleAddTask(const crow::request &req);
-
-    // Helper metody pro vytváření odpovědí
-    crow::response createJsonResponse(int statusCode, const std::string &content);
-
-    crow::response createTextResponse(int statusCode, const std::string &content);
-
-    // Konverzní metody
-    nlohmann::json convertTasksToJson(const std::vector<Task> &tasks);
-
     crow::response handleRemoveTask(int id);
-
     crow::response handleUpdateTask(const crow::request &req, int id);
-
     crow::response processTaskUpdate(const UpdateTaskDto &dto, int id);
+
+    // Statické helper metody pro vytváření odpovědí
+    static crow::response createJsonResponse(int statusCode, const std::string &content);
+    static crow::response createTextResponse(int statusCode, const std::string &content);
+
+    // Statická konverzní metoda
+    static nlohmann::json convertTasksToJson(const std::vector<Task> &tasks);
 
 public:
     explicit RestServer(TaskManager &manager);

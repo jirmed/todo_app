@@ -20,9 +20,6 @@ namespace {
     constexpr int HTTP_NOT_FOUND = 404;
     constexpr int HTTP_INTERNAL_ERROR = 500;
 
-    const std::string JSON_CONTENT_TYPE = "application/json";
-    const std::string TEXT_CONTENT_TYPE = "text/plain";
-
     // Extrahované error messages
     const std::string MSG_TASK_CREATED = "Task created successfully";
     const std::string MSG_TASK_REMOVED = "Task removed successfully";
@@ -77,13 +74,14 @@ crow::response RestServer::handleAddTask(const crow::request &req) {
         const CreateTaskDto dto = json.get<CreateTaskDto>();
         manager_.addTask(dto.title);
         return createTextResponse(HTTP_CREATED, MSG_TASK_CREATED);
-    } catch (const nlohmann::json::exception &e) {
+    } catch ([[maybe_unused]] const nlohmann::json::exception &e) {
         return createTextResponse(HTTP_BAD_REQUEST, MSG_INVALID_JSON);
-    } catch (const std::exception &e) {
+    } catch ([[maybe_unused]] const std::exception &e) {
         return createTextResponse(HTTP_INTERNAL_ERROR, MSG_INTERNAL_ERROR);
     }
 }
 
+// Tato metoda může být static, protože nepotřebuje přístup k this
 nlohmann::json RestServer::convertTasksToJson(const std::vector<Task> &tasks) {
     nlohmann::json jsonResponse = nlohmann::json::array();
     for (const auto &task: tasks) {
@@ -101,15 +99,14 @@ crow::response RestServer::handleRemoveTask(int id) {
     }
 }
 
-
 crow::response RestServer::handleUpdateTask(const crow::request &req, int id) {
     try {
         const auto json = nlohmann::json::parse(req.body);
         const UpdateTaskDto dto = json.get<UpdateTaskDto>();
         return processTaskUpdate(dto, id);
-    } catch (const nlohmann::json::exception &e) {
+    } catch ([[maybe_unused]] const nlohmann::json::exception &e) {
         return createTextResponse(HTTP_BAD_REQUEST, MSG_INVALID_JSON);
-    } catch (const std::exception &e) {
+    } catch ([[maybe_unused]] const std::exception &e) {
         return createTextResponse(HTTP_INTERNAL_ERROR, MSG_INTERNAL_ERROR);
     }
 }
@@ -127,6 +124,7 @@ crow::response RestServer::processTaskUpdate(const UpdateTaskDto &dto, int id) {
     return createTextResponse(HTTP_OK, MSG_TASK_UPDATED);
 }
 
+// Tyto metody mohou být static, protože nepotřebují přístup k this
 crow::response RestServer::createJsonResponse(int statusCode, const std::string &content) {
     crow::response res(statusCode, content);
     res.add_header("Content-Type", JSON_CONTENT_TYPE);
