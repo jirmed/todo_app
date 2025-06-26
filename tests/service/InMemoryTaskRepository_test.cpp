@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "../../src/service/InMemoryTaskRepository.h"
+#include "../../src/repository/InMemoryTaskRepository.h"
 #include "../../src/model/Task.h"
 
 class InMemoryTaskRepositoryTest : public ::testing::Test {

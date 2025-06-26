@@ -2,7 +2,7 @@
 #pragma once
 
 #include "model/TaskRepository.h"
-#include "service/dso/TaskDSO.h"
+#include "repository/dso/TaskDSO.h"
 #include <string>
 #include <vector>
 
