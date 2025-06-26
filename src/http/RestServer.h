@@ -9,6 +9,9 @@
 #include "UpdateTaskDto.h"
 
 class RestServer {
+    // Friend deklarace na začátku třídy
+    friend class RestServerTest;
+    
 private:
     static constexpr const char *JSON_CONTENT_TYPE = "application/json; charset=utf-8";
     static constexpr const char *TEXT_CONTENT_TYPE = "text/plain; charset=utf-8";
@@ -40,4 +43,9 @@ public:
     void run();
 
     void setupRoutes(crow::SimpleApp &app);
+
+    // Veřejné testovací metody pro přístup k privátním handleru metodám
+    crow::response testHandleGetAllTasks() { return handleGetAllTasks(); }
+    crow::response testHandleAddTask(const crow::request &req) { return handleAddTask(req); }
+    crow::response testHandleRemoveTask(int id) { return handleRemoveTask(id); }
 };
