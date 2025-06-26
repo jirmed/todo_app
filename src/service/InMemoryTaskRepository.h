@@ -7,7 +7,7 @@
 #include <cstddef>   // Pro std::size_t
 #include <optional>
 
-class InMemoryTaskRepository : public TaskRepository {
+class InMemoryTaskRepository final : public TaskRepository {
 public:
     Task addTask(std::string_view title) override;
     bool markDoneById(std::size_t id) override;
