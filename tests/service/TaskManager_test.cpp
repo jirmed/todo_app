@@ -1,8 +1,12 @@
 #include <gtest/gtest.h>
 #include "../../src/service/TaskManager.h"
+#include "../../src/service/InMemoryTaskRepository.h"
 
 class TaskManagerTest : public ::testing::Test {
 protected:
+    // Inicializace v konstruktoru nebo v SetUp metodě
+    TaskManagerTest() : taskManager(std::make_unique<InMemoryTaskRepository>()) {}
+
     TaskManager taskManager;
 };
 

@@ -4,10 +4,11 @@
 
 struct TaskMapper {
     static TaskDto toDto(const Task& task) {
-        return TaskDto{task.id_, task.title_, task.done_};
+        return TaskDto{static_cast<int>(task.id_), task.title_, task.done_};
     }
 
     static Task fromDto(const TaskDto& dto) {
-        return Task(dto.title, dto.done);
+        // Použijeme existující konstruktor s ID, názvem a stavem dokončení
+        return Task(dto.id, dto.title, dto.done);
     }
 };

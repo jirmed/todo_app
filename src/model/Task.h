@@ -1,16 +1,17 @@
 #pragma once
+
 #include <string>
-#include <cstddef> // Pro std::size_t
+#include <cstddef>
+#include <utility> // Pro std::move
 
 struct Task {
-    std::size_t id_ = 0;
+    std::size_t id_;
     std::string title_;
-    bool done_ = false;
+    bool done_;
 
-    Task() = default;
+    // Konstruktor pro vytvoření nového úkolu s automaticky generovaným ID (0 je placeholder)
+    explicit Task(std::string title) : id_(0), title_(std::move(title)), done_(false) {}
 
-    explicit Task(std::string title, bool done = false)
-        : title_(std::move(title)), done_(done) {
-    }
-
+    // Konstruktor pro deserializaci nebo ruční nastavení ID
+    Task(std::size_t id, std::string title, bool done) : id_(id), title_(std::move(title)), done_(done) {}
 };

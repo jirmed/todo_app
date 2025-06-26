@@ -1,9 +1,14 @@
 #include <gtest/gtest.h>
 #include "http/RestServer.h"
 #include "../../src/service/TaskManager.h"
+#include "../../src/service/InMemoryTaskRepository.h"
 
 class RestServerTest : public ::testing::Test {
 protected:
+    RestServerTest() : 
+        taskManager(std::make_unique<InMemoryTaskRepository>()),
+        restServer(taskManager) {}
+        
     void SetUp() override {
         // Inicializace před každým testem
     }
@@ -13,7 +18,7 @@ protected:
     }
     
     TaskManager taskManager;
-    RestServer restServer{taskManager};
+    RestServer restServer;
 };
 
 TEST_F(RestServerTest, InitializesWithValidTaskManager) {
@@ -73,4 +78,3 @@ TEST_F(RestServerTest, HandleRemoveTask_InvalidId_ReturnsNotFound) {
     const auto response = restServer.testHandleRemoveTask(999);
     EXPECT_EQ(404, response.code);
 }
-

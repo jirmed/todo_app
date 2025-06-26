@@ -1,21 +1,22 @@
 #pragma once
-#include <vector>
-#include <string_view>
+
 #include "../model/Task.h"
+#include "../model/TaskRepository.h"
+#include <vector>
+#include <string>
+#include <memory> // Pro std::unique_ptr
 
 class TaskManager {
 public:
+    // TaskManager nyní přijímá unique_ptr na ITaskRepository
+    explicit TaskManager(std::unique_ptr<TaskRepository> repository);
+
     void addTask(std::string_view title);
     bool markDoneById(std::size_t id);
     bool removeTaskById(std::size_t id);
-
-    bool isValidIndex(std::size_t index) const;
-
-    [[nodiscard]] const std::vector<Task>& getAllTasks() const {
-        return tasks_;
-    }
+    bool isValidIndex(std::size_t id) const; // Upraveno pro kontrolu ID, ne indexu
+    std::vector<Task> getAllTasks() const; // Nová metoda pro získání všech úkolů
 
 private:
-    std::vector<Task> tasks_;
-    std::size_t nextId_ = 1;
+    std::unique_ptr<TaskRepository> repository_;
 };

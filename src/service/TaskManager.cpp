@@ -1,34 +1,27 @@
 #include "TaskManager.h"
 #include <iostream>
-#include <algorithm>
+#include <algorithm> // Může být odstraněno, protože logiku přesouváme do repository
+
+TaskManager::TaskManager(std::unique_ptr<TaskRepository> repository)
+    : repository_(std::move(repository)) {}
 
 void TaskManager::addTask(std::string_view title) {
-    tasks_.emplace_back(std::string(title));
-    tasks_.back().id_ = nextId_++;
+    repository_->addTask(title);
 }
 
 bool TaskManager::markDoneById(std::size_t id) {
-    const auto it = std::ranges::find_if(tasks_,
-                                         [id](const Task& task) { return task.id_ == id; });
-    
-    if (it != tasks_.end()) {
-        it->done_ = true;
-        return true;
-    }
-    return false;
+    return repository_->markDoneById(id);
 }
 
 bool TaskManager::removeTaskById(std::size_t id) {
-    const auto it = std::ranges::find_if(tasks_,
-                                   [id](const Task& task) { return task.id_ == id; });
-    
-    if (it != tasks_.end()) {
-        tasks_.erase(it);
-        return true;
-    }
-    return false;
+    return repository_->removeTaskById(id);
 }
 
-bool TaskManager::isValidIndex(std::size_t index) const {
-    return index < tasks_.size();
+// Tato metoda nyní kontroluje existenci úkolu podle ID v repozitáři
+bool TaskManager::isValidIndex(std::size_t id) const {
+    return repository_->getTaskById(id).has_value();
+}
+
+std::vector<Task> TaskManager::getAllTasks() const {
+    return repository_->getAllTasks();
 }
