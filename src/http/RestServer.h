@@ -1,12 +1,12 @@
 // RestServer.h
 #pragma once
-#include "TaskManager.h"
+#include "../service/TaskManager.h"
 #include <crow.h>
 #include <nlohmann/json.hpp>
 #include <vector>
 
 #include "RestServer.h"
-#include "UpdateTaskDto.h"
+#include "dto/UpdateTaskDto.h"
 
 class RestServer {
     // Friend deklarace na začátku třídy

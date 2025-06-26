@@ -2,7 +2,7 @@
 
 #include <string>
 #include <vector>
-#include "Task.h"
+#include "../model/Task.h"
 
 class UI {
 public:

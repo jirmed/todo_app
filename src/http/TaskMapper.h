@@ -1,6 +1,6 @@
 #pragma once
-#include "../Task.h"
-#include "TaskDto.h"
+#include "../model/Task.h"
+#include "dto/TaskDto.h"
 
 struct TaskMapper {
     static TaskDto toDto(const Task& task) {

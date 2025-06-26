@@ -2,9 +2,9 @@
 #include <crow.h>
 #include <nlohmann/json.hpp>
 #include "TaskMapper.h"
-#include "TaskDto.h"
-#include "CreateTaskDto.h"
-#include "UpdateTaskDto.h"
+#include "dto/TaskDto.h"
+#include "dto/CreateTaskDto.h"
+#include "dto/UpdateTaskDto.h"
 #ifdef _WIN32
 #include <windows.h>
 #include <io.h>

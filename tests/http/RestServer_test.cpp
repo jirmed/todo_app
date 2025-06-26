@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include "http/RestServer.h"
-#include "TaskManager.h"
+#include "../../src/service/TaskManager.h"
 
 class RestServerTest : public ::testing::Test {
 protected:

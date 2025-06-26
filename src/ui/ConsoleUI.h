@@ -1,6 +1,6 @@
 #pragma once
 #include "UI.h"
-#include "TaskManager.h"
+#include "../service/TaskManager.h"
 #include "Messages.h"
 
 class ConsoleUI final : public UI {

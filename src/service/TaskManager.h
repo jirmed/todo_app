@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 #include <string_view>
-#include "Task.h"
+#include "../model/Task.h"
 
 class TaskManager {
 public:
