@@ -19,11 +19,11 @@ private:
     TaskManager &manager_;
 
     // Helper metody pro zpracování požadavků
-    crow::response handleGetAllTasks();
-    crow::response handleAddTask(const crow::request &req);
-    crow::response handleRemoveTask(int id);
-    crow::response handleUpdateTask(const crow::request &req, int id);
-    crow::response processTaskUpdate(const UpdateTaskDto &dto, int id);
+    crow::response handleGetAllTasks() const;
+    crow::response handleAddTask(const crow::request &req) const;
+    crow::response handleRemoveTask(int id) const;
+    crow::response handleUpdateTask(const crow::request &req, int id) const;
+    crow::response processTaskUpdate(const UpdateTaskDto &dto, int id) const;
 
     // Statické helper metody pro vytváření odpovědí
     static crow::response createJsonResponse(int statusCode, const std::string &content);
@@ -40,7 +40,7 @@ public:
     void setupRoutes(crow::SimpleApp &app);
 
     // Veřejné testovací metody pro přístup k privátním handleru metodám
-    crow::response testHandleGetAllTasks() { return handleGetAllTasks(); }
-    crow::response testHandleAddTask(const crow::request &req) { return handleAddTask(req); }
-    crow::response testHandleRemoveTask(int id) { return handleRemoveTask(id); }
+    crow::response testHandleGetAllTasks() const { return handleGetAllTasks(); }
+    crow::response testHandleAddTask(const crow::request &req) const { return handleAddTask(req); }
+    crow::response testHandleRemoveTask(int id) const { return handleRemoveTask(id); }
 };

@@ -62,13 +62,13 @@ void RestServer::setupRoutes(crow::SimpleApp &app) {
     });
 }
 
-crow::response RestServer::handleGetAllTasks() {
+crow::response RestServer::handleGetAllTasks() const {
     const auto tasks = manager_.getAllTasks();
     const auto jsonResponse = convertTasksToJson(tasks);
     return createJsonResponse(HTTP_OK, jsonResponse.dump());
 }
 
-crow::response RestServer::handleAddTask(const crow::request &req) {
+crow::response RestServer::handleAddTask(const crow::request &req) const {
     try {
         const auto json = nlohmann::json::parse(req.body);
         const CreateTaskDto dto = json.get<CreateTaskDto>();
@@ -91,7 +91,7 @@ nlohmann::json RestServer::convertTasksToJson(const std::vector<Task> &tasks) {
     return jsonResponse;
 }
 
-crow::response RestServer::handleRemoveTask(int id) {
+crow::response RestServer::handleRemoveTask(int id) const {
     if (manager_.removeTaskById(id)) {
         return createTextResponse(HTTP_OK, MSG_TASK_REMOVED);
     } else {
@@ -99,7 +99,7 @@ crow::response RestServer::handleRemoveTask(int id) {
     }
 }
 
-crow::response RestServer::handleUpdateTask(const crow::request &req, int id) {
+crow::response RestServer::handleUpdateTask(const crow::request &req, int id) const {
     try {
         const auto json = nlohmann::json::parse(req.body);
         const UpdateTaskDto dto = json.get<UpdateTaskDto>();
@@ -111,7 +111,7 @@ crow::response RestServer::handleUpdateTask(const crow::request &req, int id) {
     }
 }
 
-crow::response RestServer::processTaskUpdate(const UpdateTaskDto &dto, int id) {
+crow::response RestServer::processTaskUpdate(const UpdateTaskDto &dto, int id) const {
     if (!dto.done) {
         return createTextResponse(HTTP_BAD_REQUEST, MSG_INVALID_REQUEST);
     }
