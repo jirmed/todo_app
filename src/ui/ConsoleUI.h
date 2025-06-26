@@ -19,11 +19,11 @@ public:
 private:
     TaskManager& manager_;
     
-    void printMenu();
-    int getMenuChoice();
+    static void printMenu();
+    static int getMenuChoice();
     void handleShowTasks();
     void handleAddTask();
     void handleRemoveTask();
     void handleMarkDone();
-    void printMessage(messages::MessageKey key);
+    static void printMessage(messages::MessageKey key);
 };

@@ -5,7 +5,6 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <io.h>
-#include <fcntl.h>
 #endif
 
 ConsoleUI::ConsoleUI(TaskManager& manager) : manager_(manager) {
@@ -59,7 +58,7 @@ void ConsoleUI::notifyInfo(std::string_view message) {
 }
 
 void ConsoleUI::notifyError(std::string_view message) {
-    std::cout << "[CHYBA] " << message << std::endl;
+    std::cout << "[ERROR] " << message << std::endl;
 }
 
 void ConsoleUI::displayTasks(const std::vector<Task>& tasks) {
@@ -72,7 +71,7 @@ void ConsoleUI::displayTasks(const std::vector<Task>& tasks) {
     for (const auto& task : tasks) {
         std::cout << "ID: " << task.id_ << " - " << task.title_;
         if (task.done_) {
-            std::cout << " [DOKONČENO]";
+            std::cout << " [COMPLETED]";
         }
         std::cout << std::endl;
     }

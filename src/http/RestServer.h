@@ -35,9 +35,9 @@ private:
 public:
     explicit RestServer(TaskManager &manager);
 
-    void run();
+    void run() const;
 
-    void setupRoutes(crow::SimpleApp &app);
+    void setupRoutes(crow::SimpleApp &app) const;
 
     // Veřejné testovací metody pro přístup k privátním handleru metodám
     crow::response testHandleGetAllTasks() const { return handleGetAllTasks(); }

@@ -1,6 +1,5 @@
 #include "TaskManager.h"
 #include <iostream>
-#include <bits/ostream.tcc>
 #include <algorithm>
 
 void TaskManager::addTask(std::string_view title) {
@@ -9,8 +8,8 @@ void TaskManager::addTask(std::string_view title) {
 }
 
 bool TaskManager::markDoneById(std::size_t id) {
-    auto it = std::find_if(tasks_.begin(), tasks_.end(), 
-                          [id](const Task& task) { return task.id_ == id; });
+    const auto it = std::ranges::find_if(tasks_,
+                                         [id](const Task& task) { return task.id_ == id; });
     
     if (it != tasks_.end()) {
         it->done_ = true;
@@ -20,8 +19,8 @@ bool TaskManager::markDoneById(std::size_t id) {
 }
 
 bool TaskManager::removeTaskById(std::size_t id) {
-    auto it = std::find_if(tasks_.begin(), tasks_.end(), 
-                          [id](const Task& task) { return task.id_ == id; });
+    const auto it = std::ranges::find_if(tasks_,
+                                   [id](const Task& task) { return task.id_ == id; });
     
     if (it != tasks_.end()) {
         tasks_.erase(it);

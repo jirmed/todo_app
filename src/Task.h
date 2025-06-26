@@ -1,9 +1,9 @@
 #pragma once
 #include <string>
-
+#include <cstddef> // Pro std::size_t
 
 struct Task {
-    int id_ = -1;
+    std::size_t id_ = 0;
     std::string title_;
     bool done_ = false;
 

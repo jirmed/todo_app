@@ -1,10 +1,5 @@
-#include <iostream>
-#include <string>
-#include <memory>
 #include "TaskManager.h"
 #include "http/RestServer.h"
-#include "ui/ConsoleUI.h"
-#include "ui/UI.h"
 
 int main() {
     TaskManager manager;

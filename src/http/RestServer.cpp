@@ -40,13 +40,13 @@ RestServer::RestServer(TaskManager &manager) : manager_(manager) {
 #endif
 }
 
-void RestServer::run() {
+void RestServer::run() const {
     crow::SimpleApp app;
     setupRoutes(app);
     app.port(DEFAULT_PORT).run();
 }
 
-void RestServer::setupRoutes(crow::SimpleApp &app) {
+void RestServer::setupRoutes(crow::SimpleApp &app) const {
     CROW_ROUTE(app, "/tasks").methods(crow::HTTPMethod::GET)([this]() {
         return handleGetAllTasks();
     });
