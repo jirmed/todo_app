@@ -5,20 +5,20 @@
 TaskManager::TaskManager(std::unique_ptr<TaskRepository> repository)
     : repository_(std::move(repository)) {}
 
-void TaskManager::addTask(std::string_view title) {
+void TaskManager::addTask(std::string_view title) const {
     repository_->addTask(title);
 }
 
-bool TaskManager::markDoneById(std::size_t id) {
+bool TaskManager::markDoneById(std::size_t id) const {
     return repository_->markDoneById(id);
 }
 
-bool TaskManager::removeTaskById(std::size_t id) {
+bool TaskManager::removeTaskById(std::size_t id) const {
     return repository_->removeTaskById(id);
 }
 
 // Tato metoda nyní kontroluje existenci úkolu podle ID v repozitáři
-bool TaskManager::isValidIndex(std::size_t id) const {
+bool TaskManager::isValidId(std::size_t id) const {
     return repository_->getTaskById(id).has_value();
 }
 

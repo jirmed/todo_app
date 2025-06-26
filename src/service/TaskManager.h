@@ -11,10 +11,10 @@ public:
     // TaskManager nyní přijímá unique_ptr na ITaskRepository
     explicit TaskManager(std::unique_ptr<TaskRepository> repository);
 
-    void addTask(std::string_view title);
-    bool markDoneById(std::size_t id);
-    bool removeTaskById(std::size_t id);
-    bool isValidIndex(std::size_t id) const; // Upraveno pro kontrolu ID, ne indexu
+    void addTask(std::string_view title) const;
+    bool markDoneById(std::size_t id) const;
+    bool removeTaskById(std::size_t id) const;
+    bool isValidId(std::size_t id) const; // Upraveno pro kontrolu ID, ne indexu
     std::vector<Task> getAllTasks() const; // Nová metoda pro získání všech úkolů
 
 private:
