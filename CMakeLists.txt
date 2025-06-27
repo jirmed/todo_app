@@ -108,10 +108,8 @@ target_precompile_headers(core
     <nlohmann/json.hpp>
 )
 
-# Upravíme include cesty, aby reflektovaly novou strukturu
 target_include_directories(core
     PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${ASIO_INCLUDE_DIR}
 )
