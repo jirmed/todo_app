@@ -1,7 +1,8 @@
 #include <gtest/gtest.h>
-#include "http/RestServer.h"
-#include "../../src/service/TaskManager.h"
-#include "../../src/repository/InMemoryTaskRepository.h"
+#include "presentation/http/RestServer.h"
+
+#include <repository/memory/InMemoryTaskRepository.h>
+#include "service/TaskManager.h"
 
 class RestServerTest : public ::testing::Test {
 protected:

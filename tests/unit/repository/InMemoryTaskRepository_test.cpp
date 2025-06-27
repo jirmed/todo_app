@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
-#include "../../src/repository/InMemoryTaskRepository.h"
-#include "../../src/model/Task.h"
+#include "repository/memory/InMemoryTaskRepository.h"
+#include "model/Task.h"
 
 class InMemoryTaskRepositoryTest : public ::testing::Test {
 protected:

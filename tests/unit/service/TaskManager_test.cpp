@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
-#include "../../src/service/TaskManager.h"
-#include "../../src/repository/InMemoryTaskRepository.h"
+#include "service/TaskManager.h"
+#include "repository/memory/InMemoryTaskRepository.h"
 
 class TaskManagerTest : public ::testing::Test {
 protected:

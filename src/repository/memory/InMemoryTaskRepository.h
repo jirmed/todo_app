@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../model/TaskRepository.h"
+#include "repository/TaskRepository.h"
 #include <vector>
 #include <string>
 #include <algorithm> // Pro std::ranges::find_if

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../model/Task.h"
-#include "../model/TaskRepository.h"
+#include "model/Task.h"
+#include "repository/TaskRepository.h"
 #include <vector>
 #include <string>
 #include <memory> // Pro std::unique_ptr

@@ -1,5 +1,5 @@
 #pragma once
-#include "../model/Task.h"
+#include "model/Task.h"
 #include "dto/TaskDto.h"
 
 struct TaskMapper {

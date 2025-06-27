@@ -8,6 +8,7 @@ namespace messages {
         const std::unordered_map<MessageKey, std::string_view> MESSAGE_MAP = {
 #define X(key, text) { MessageKey::key, text },
 #include "Messages.def"
+
 #undef X
         };
     }

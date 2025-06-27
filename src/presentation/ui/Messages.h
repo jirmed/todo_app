@@ -6,6 +6,7 @@ namespace messages {
     enum class MessageKey {
 #define X(key, text) key,
 #include "Messages.def"
+
 #undef X
     };
 

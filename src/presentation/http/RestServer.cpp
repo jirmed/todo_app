@@ -1,10 +1,12 @@
 #include "RestServer.h"
+
+#include "service/TaskManager.h"
 #include <crow.h>
 #include <nlohmann/json.hpp>
-#include "TaskMapper.h"
-#include "dto/TaskDto.h"
-#include "dto/CreateTaskDto.h"
-#include "dto/UpdateTaskDto.h"
+#include "presentation/http/TaskMapper.h"
+#include "presentation/http/dto/TaskDto.h"
+#include "presentation/http/dto/CreateTaskDto.h"
+#include "presentation/http/dto/UpdateTaskDto.h"
 #ifdef _WIN32
 #include <windows.h>
 #include <io.h>

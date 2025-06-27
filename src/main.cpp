@@ -1,7 +1,6 @@
-#include "service/TaskManager.h"
-#include "http/RestServer.h"
-#include "repository/InMemoryTaskRepository.h"
-#include "repository/FileRepository.h"
+#include <repository/file/FileRepository.h>
+#include <service/TaskManager.h>
+#include <presentation/http/RestServer.h>
 
 int main() {
 //    auto repository = std::make_unique<InMemoryTaskRepository>();

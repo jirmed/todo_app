@@ -82,8 +82,17 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
 # 📚 Core knihovna - změníme na statickou
-file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS src/*.cpp src/*.h)
+# Rekurzivně najdeme všechny zdrojové soubory v adresáři src
+file(GLOB_RECURSE SRC_FILES 
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/**/*.cpp"
+)
+
+# Přidáme explicitně chybějící soubor
+list(APPEND SRC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/presentation/http/RestServer.cpp")
+
+# Vyloučíme main.cpp ze zdrojových souborů knihovny
 list(FILTER SRC_FILES EXCLUDE REGEX ".*main\\.cpp$")
+
 add_library(core STATIC ${SRC_FILES})
 
 # Precompiled headers pro rychlejší kompilaci
@@ -99,29 +108,31 @@ target_precompile_headers(core
     <nlohmann/json.hpp>
 )
 
+# Upravíme include cesty, aby reflektovaly novou strukturu
 target_include_directories(core
-        PUBLIC
-        src
-        ${ASIO_INCLUDE_DIR}
+    PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${ASIO_INCLUDE_DIR}
 )
 
 target_link_libraries(core
-        PUBLIC
-        nlohmann_json::nlohmann_json
-        Crow::Crow
+    PUBLIC
+    nlohmann_json::nlohmann_json
+    Crow::Crow
 )
 
 target_compile_definitions(core
-        PUBLIC
-        ASIO_STANDALONE
+    PUBLIC
+    ASIO_STANDALONE
 )
 
 # Linkování Windows specifických knihoven
 if(WIN32)
     target_link_libraries(core
-            PUBLIC
-            ws2_32
-            mswsock
+        PUBLIC
+        ws2_32
+        mswsock
     )
 endif()
 
@@ -130,13 +141,17 @@ add_executable(app src/main.cpp)
 target_link_libraries(app PRIVATE core)
 
 # 🧪 Testy
-file(GLOB_RECURSE TEST_FILES CONFIGURE_DEPENDS tests/*.cpp)
+# Rekurzivně najdeme všechny testovací soubory
+file(GLOB_RECURSE TEST_FILES 
+    "${CMAKE_CURRENT_SOURCE_DIR}/tests/**/*_test.cpp"
+)
+
 add_executable(tests ${TEST_FILES})
 target_link_libraries(tests
-        PRIVATE
-        core
-        gtest_main
-        gtest
+    PRIVATE
+    core
+    gtest_main
+    gtest
 )
 
 # Zajištění správného runtime pro Windows
@@ -165,3 +180,14 @@ endif()
 include(GoogleTest)
 enable_testing()
 gtest_discover_tests(tests)
+
+# Vypíše všechny zdrojové soubory - užitečné pro debugging
+message(STATUS "Nalezené zdrojové soubory:")
+foreach(SRC_FILE ${SRC_FILES})
+    message(STATUS "  ${SRC_FILE}")
+endforeach()
+
+message(STATUS "Nalezené testovací soubory:")
+foreach(TEST_FILE ${TEST_FILES})
+    message(STATUS "  ${TEST_FILE}")
+endforeach()
