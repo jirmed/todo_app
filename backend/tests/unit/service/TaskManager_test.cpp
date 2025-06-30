@@ -10,11 +10,6 @@ protected:
     TaskManager taskManager;
 };
 
-int main(int argc, char **argv) {
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}
-
 TEST_F(TaskManagerTest, AddTask_AddsTaskToCollection) {
     taskManager.addTask("Test Task");
 

@@ -142,18 +142,24 @@ target_link_libraries(app PRIVATE core)
 include(GoogleTest)
 enable_testing()
 
-# Rekurzivně najdeme všechny testovací soubory
+# Najděte všechny testovací soubory (ponechte jak je)
 file(GLOB_RECURSE TEST_FILES 
     "${CMAKE_CURRENT_SOURCE_DIR}/tests/**/*_test.cpp"
 )
 
-# Pro každý testovací soubor vytvoříme samostatný spustitelný soubor
+# Vytvořte samostatné test executables pro každý testovací soubor
 foreach(TEST_FILE ${TEST_FILES})
-    # Získáme název testu ze jména souboru (např. "InMemoryTaskRepository_test")
+    # Získat název testu bez cesty a přípony
     get_filename_component(TEST_NAME ${TEST_FILE} NAME_WE)
 
-    # Vytvoříme spustitelný soubor pro daný test
+    # Přidat samostatný test executable
     add_executable(${TEST_NAME} ${TEST_FILE})
+
+    target_include_directories(${TEST_NAME}
+        PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests
+    )
+
     target_link_libraries(${TEST_NAME}
         PRIVATE
         core
@@ -161,31 +167,47 @@ foreach(TEST_FILE ${TEST_FILES})
         gtest
     )
 
-    # Zajištění správného runtime pro Windows
+    # Windows output adresář pro testy
     if(WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Debug")
         set_target_properties(${TEST_NAME} PROPERTIES
             RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
         )
-        
-        # Kopírování potřebných DLL souborů do výstupního adresáře
-        add_custom_command(TARGET ${TEST_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:gtest>
-            $<TARGET_FILE_DIR:${TEST_NAME}>
-            COMMENT "Copying gtest DLL to test directory"
-        )
-        
-        add_custom_command(TARGET ${TEST_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:gtest_main>
-            $<TARGET_FILE_DIR:${TEST_NAME}>
-            COMMENT "Copying gtest_main DLL to test directory"
-        )
     endif()
 
-    # Registrace testů pomocí discover_tests - vráceno na původní
-    gtest_discover_tests(${TEST_NAME})
+    # Použití gtest_discover_tests místo add_test pro detekci jednotlivých testovacích případů
+    gtest_discover_tests(${TEST_NAME}
+        WORKING_DIRECTORY "$<TARGET_FILE_DIR:${TEST_NAME}>"
+        PROPERTIES
+            VS_DEBUGGER_WORKING_DIRECTORY "$<TARGET_FILE_DIR:${TEST_NAME}>"
+        TEST_PREFIX "${TEST_NAME}."
+        TEST_LIST ${TEST_NAME}_TESTS
+    )
+
+    # Nastavení vlastnosti TEST_DISCOVERY_TIMEOUT pro delší dobu objevování testů
+    set_property(GLOBAL PROPERTY TEST_DISCOVERY_TIMEOUT 60)
 endforeach()
+
+# Ponecháme i původní unit_tests executable pro zpětnou kompatibilitu
+add_executable(unit_tests ${TEST_FILES})
+
+target_include_directories(unit_tests
+    PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/unit
+)
+
+target_link_libraries(unit_tests
+    PRIVATE
+    core
+    gtest_main
+    gtest
+)
+
+# Windows output adresář pro testy
+if(WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set_target_properties(unit_tests PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+    )
+endif()
 
 # Vypíše všechny zdrojové soubory - užitečné pro debugging
 message(STATUS "Nalezené zdrojové soubory:")
