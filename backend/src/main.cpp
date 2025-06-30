@@ -1,5 +1,7 @@
 #include <service/TaskManager.h>
 #include <presentation/http/RestServer.h>
+
+#include "repository/file/FileRepository.h"
 #include "repository/memory/InMemoryTaskRepository.h"
 
 // Přidáme potřebné hlavičkové soubory i sem
@@ -18,8 +20,8 @@ int main() {
     _setmode(_fileno(stdin), _O_U8TEXT);
 #endif
 
-    auto repository = std::make_unique<InMemoryTaskRepository>();
-//    auto repository = std::make_unique<FileRepository>("data/tasks.csv");
+    // auto repository = std::make_unique<InMemoryTaskRepository>();
+    auto repository = std::make_unique<FileRepository>("tasks.csv");
     TaskManager manager(std::move(repository));
     // std::unique_ptr<UI> ui = std::make_unique<ConsoleUI>(manager);
     // ui->run();

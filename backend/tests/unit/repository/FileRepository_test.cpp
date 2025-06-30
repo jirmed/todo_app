@@ -23,6 +23,27 @@ protected:
     const std::string testFile = "test_tasks.csv";
     std::unique_ptr<FileRepository> repository;
 };
+TEST_F(FileRepositoryTest, FileDoesNotExist_ShouldCreateFile) {
+    // Odstranění souboru, aby ho mohl repository vytvořit
+    if (std::filesystem::exists(testFile)) {
+        std::filesystem::remove(testFile);
+    }
+
+    // Vytvoření nové instance repository
+    auto newRepo = std::make_unique<FileRepository>(testFile);
+
+    // Ověření, že soubor byl vytvořen
+    EXPECT_TRUE(std::filesystem::exists(testFile));
+
+    // Přidání úkolu pro ověření funkčnosti
+    newRepo->addTask("Nový úkol");
+
+    // Ověření, že úkol byl úspěšně uložen
+    auto tasks = newRepo->getAllTasks();
+    EXPECT_EQ(1, tasks.size());
+    EXPECT_EQ("Nový úkol", tasks[0].title_);
+}
+
 
 TEST_F(FileRepositoryTest, SaveTask_ShouldPersistTask) {
     Task task = repository->addTask("Test Task");

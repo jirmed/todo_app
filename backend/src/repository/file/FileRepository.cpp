@@ -12,6 +12,9 @@ namespace {
 }
 
 FileRepository::FileRepository(const std::string &filePath) : filePath_(filePath) {
+    if (!std::filesystem::exists(filePath_)) {
+        std::ofstream ofs(filePath_);
+    }
     loadFromFile();
 }
 
