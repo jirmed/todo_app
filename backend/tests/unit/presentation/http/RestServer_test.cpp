@@ -1,86 +1,75 @@
 #include <gtest/gtest.h>
 #include "presentation/http/RestServer.h"
-
+#include "service/TaskManager.h"
 #include <repository/memory/InMemoryTaskRepository.h>
 #include <nlohmann/json.hpp>
-#include "service/TaskManager.h"
+#include <memory>
 
 class RestServerTest : public ::testing::Test {
 protected:
-    RestServerTest() :
-        taskManager(std::make_unique<InMemoryTaskRepository>()),
-        restServer(taskManager) {}
-
     void SetUp() override {
-        // Inicializace před každým testem
+        taskManager = std::make_unique<TaskManager>(std::make_unique<InMemoryTaskRepository>());
+        restServer = std::make_unique<RestServer>(*taskManager);
     }
 
     void TearDown() override {
-        // Cleanup po každém testu
+        restServer.reset();
+        taskManager.reset();
     }
 
-    TaskManager taskManager;
-    RestServer restServer;
+    std::unique_ptr<TaskManager> taskManager;
+    std::unique_ptr<RestServer> restServer;
 };
 
 TEST_F(RestServerTest, InitializesWithValidTaskManager) {
-    // Test pouze ověří, že se objekt vytváří bez problémů
-    // ReSharper disable once CppDeclaratorNeverUsed
-    EXPECT_NO_THROW(RestServer server(taskManager));
+    ASSERT_NE(taskManager, nullptr);
+    ASSERT_NE(restServer, nullptr);
 }
 
 TEST_F(RestServerTest, HandleGetAllTasks_ReturnsEmptyArrayWhenNoTasks) {
-    // Test GET /tasks s prázdným seznamem
-    const auto response = restServer.testHandleGetAllTasks();
+    // Voláme přímo veřejnou metodu handleGetAllTasks
+    const auto response = restServer->handleGetAllTasks();
     EXPECT_EQ(200, response.code);
     EXPECT_TRUE(response.body.find("[]") != std::string::npos);
 }
 
 TEST_F(RestServerTest, HandleGetAllTasks_ReturnsTasksWhenPresent) {
-    // Přidáme úkol a otestujeme GET /tasks
-    taskManager.addTask("Test Task");
-
-    auto response = restServer.testHandleGetAllTasks();
+    taskManager->addTask("Test Task");
+    // Voláme přímo veřejnou metodu handleGetAllTasks
+    auto response = restServer->handleGetAllTasks();
     EXPECT_EQ(200, response.code);
     EXPECT_TRUE(response.body.find("Test Task") != std::string::npos);
 }
 
 TEST_F(RestServerTest, HandleAddTask_ValidJson_ReturnsCreated) {
-    // Test POST /tasks s validním JSON
     crow::request req;
     req.body = R"({"title": "New Task"})";
-
-    auto response = restServer.testHandleAddTask(req);
+    // Voláme přímo veřejnou metodu handleAddTask
+    auto response = restServer->handleAddTask(req);
     EXPECT_EQ(201, response.code);
-
-    // Nyní ověřujeme obsah JSON odpovědi, nikoli jen text "created"
     const auto jsonBody = nlohmann::json::parse(response.body);
     EXPECT_EQ("New Task", jsonBody["title"]);
-    EXPECT_FALSE(jsonBody["done"]); // Ověříme, že nový úkol není označen jako hotový
+    EXPECT_FALSE(jsonBody["done"]);
 }
 
 TEST_F(RestServerTest, HandleAddTask_InvalidJson_ReturnsBadRequest) {
-    // Test POST /tasks s nevalidním JSON
     crow::request req;
     req.body = "invalid json";
-
-    auto response = restServer.testHandleAddTask(req);
+    // Voláme přímo veřejnou metodu handleAddTask
+    auto response = restServer->handleAddTask(req);
     EXPECT_EQ(400, response.code);
 }
 
 TEST_F(RestServerTest, HandleRemoveTask_ValidId_ReturnsOk) {
-    // Přidáme úkol a pak ho odstraníme
-    taskManager.addTask("Task to Remove");
-    const auto& tasks = taskManager.getAllTasks();
-    ASSERT_FALSE(tasks.empty());
-
-    const int taskId = static_cast<int>(tasks[0].id_);
-    auto response = restServer.testHandleRemoveTask(taskId);
+    Task createdTask = taskManager->addTask("Task to Remove");
+    const int taskId = static_cast<int>(createdTask.id_);
+    // Voláme přímo veřejnou metodu handleRemoveTask
+    auto response = restServer->handleRemoveTask(taskId);
     EXPECT_EQ(200, response.code);
 }
 
 TEST_F(RestServerTest, HandleRemoveTask_InvalidId_ReturnsNotFound) {
-    // Test odstranění neexistujícího úkolu
-    const auto response = restServer.testHandleRemoveTask(999);
+    // Voláme přímo veřejnou metodu handleRemoveTask
+    const auto response = restServer->handleRemoveTask(999);
     EXPECT_EQ(404, response.code);
 }
