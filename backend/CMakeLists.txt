@@ -143,7 +143,7 @@ include(GoogleTest)
 enable_testing()
 
 # Najděte všechny testovací soubory (ponechte jak je)
-file(GLOB_RECURSE TEST_FILES 
+file(GLOB_RECURSE TEST_FILES
     "${CMAKE_CURRENT_SOURCE_DIR}/tests/**/*_test.cpp"
 )
 
@@ -167,7 +167,7 @@ foreach(TEST_FILE ${TEST_FILES})
         gtest
     )
 
-    # Windows output adresář pro testy
+#    # Windows output adresář pro testy
     if(WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Debug")
         set_target_properties(${TEST_NAME} PROPERTIES
             RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
@@ -209,13 +209,3 @@ if(WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Debug")
     )
 endif()
 
-# Vypíše všechny zdrojové soubory - užitečné pro debugging
-message(STATUS "Nalezené zdrojové soubory:")
-foreach(SRC_FILE ${SRC_FILES})
-    message(STATUS "  ${SRC_FILE}")
-endforeach()
-
-message(STATUS "Nalezené testovací soubory:")
-foreach(TEST_FILE ${TEST_FILES})
-    message(STATUS "  ${TEST_FILE}")
-endforeach()
