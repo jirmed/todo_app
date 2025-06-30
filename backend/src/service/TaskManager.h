@@ -11,7 +11,7 @@ public:
     // TaskManager nyní přijímá unique_ptr na ITaskRepository
     explicit TaskManager(std::unique_ptr<TaskRepository> repository);
 
-    void addTask(std::string_view title) const;
+    Task addTask(std::string_view title) const;
     bool markDoneById(std::size_t id) const;
     bool removeTaskById(std::size_t id) const;
     bool isValidId(std::size_t id) const; // Upraveno pro kontrolu ID, ne indexu

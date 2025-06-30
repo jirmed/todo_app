@@ -2,22 +2,23 @@
 #include "presentation/http/RestServer.h"
 
 #include <repository/memory/InMemoryTaskRepository.h>
+#include <nlohmann/json.hpp>
 #include "service/TaskManager.h"
 
 class RestServerTest : public ::testing::Test {
 protected:
-    RestServerTest() : 
+    RestServerTest() :
         taskManager(std::make_unique<InMemoryTaskRepository>()),
         restServer(taskManager) {}
-        
+
     void SetUp() override {
         // Inicializace před každým testem
     }
-    
+
     void TearDown() override {
         // Cleanup po každém testu
     }
-    
+
     TaskManager taskManager;
     RestServer restServer;
 };
@@ -38,7 +39,7 @@ TEST_F(RestServerTest, HandleGetAllTasks_ReturnsEmptyArrayWhenNoTasks) {
 TEST_F(RestServerTest, HandleGetAllTasks_ReturnsTasksWhenPresent) {
     // Přidáme úkol a otestujeme GET /tasks
     taskManager.addTask("Test Task");
-    
+
     auto response = restServer.testHandleGetAllTasks();
     EXPECT_EQ(200, response.code);
     EXPECT_TRUE(response.body.find("Test Task") != std::string::npos);
@@ -48,17 +49,21 @@ TEST_F(RestServerTest, HandleAddTask_ValidJson_ReturnsCreated) {
     // Test POST /tasks s validním JSON
     crow::request req;
     req.body = R"({"title": "New Task"})";
-    
+
     auto response = restServer.testHandleAddTask(req);
     EXPECT_EQ(201, response.code);
-    EXPECT_TRUE(response.body.find("created") != std::string::npos);
+
+    // Nyní ověřujeme obsah JSON odpovědi, nikoli jen text "created"
+    const auto jsonBody = nlohmann::json::parse(response.body);
+    EXPECT_EQ("New Task", jsonBody["title"]);
+    EXPECT_FALSE(jsonBody["done"]); // Ověříme, že nový úkol není označen jako hotový
 }
 
 TEST_F(RestServerTest, HandleAddTask_InvalidJson_ReturnsBadRequest) {
     // Test POST /tasks s nevalidním JSON
     crow::request req;
     req.body = "invalid json";
-    
+
     auto response = restServer.testHandleAddTask(req);
     EXPECT_EQ(400, response.code);
 }

@@ -15,6 +15,7 @@ class RestServer {
 private:
     static constexpr const char *JSON_CONTENT_TYPE = "application/json; charset=utf-8";
     static constexpr const char *TEXT_CONTENT_TYPE = "text/plain; charset=utf-8";
+    static constexpr const char *API_PREFIX = "/api";  // Přidání prefixu
 
     TaskManager &manager_;
 

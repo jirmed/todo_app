@@ -5,8 +5,9 @@
 TaskManager::TaskManager(std::unique_ptr<TaskRepository> repository)
     : repository_(std::move(repository)) {}
 
-void TaskManager::addTask(std::string_view title) const {
-    repository_->addTask(title);
+Task TaskManager::addTask(std::string_view title) const {
+    auto task = repository_->addTask(title);   // Předpokládáme, že repo vrací id nového tasku
+    return task;
 }
 
 bool TaskManager::markDoneById(std::size_t id) const {

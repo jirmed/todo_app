@@ -14,7 +14,6 @@
 #endif
 
 namespace {
-    // Extrahované konstanty pro lepší údržbu
     constexpr int DEFAULT_PORT = 18080;
     constexpr int HTTP_OK = 200;
     constexpr int HTTP_CREATED = 201;
@@ -22,8 +21,6 @@ namespace {
     constexpr int HTTP_NOT_FOUND = 404;
     constexpr int HTTP_INTERNAL_ERROR = 500;
 
-    // Extrahované error messages
-    const std::string MSG_TASK_CREATED = "Task created successfully";
     const std::string MSG_TASK_REMOVED = "Task removed successfully";
     const std::string MSG_TASK_UPDATED = "Task updated";
     const std::string MSG_TASK_NOT_FOUND = "Task not found";
@@ -34,7 +31,6 @@ namespace {
 
 RestServer::RestServer(TaskManager &manager) : manager_(manager) {
 #ifdef _WIN32
-    // Nastavení UTF-8 pro Windows
     SetConsoleCP(CP_UTF8);
     SetConsoleOutputCP(CP_UTF8);
     _setmode(_fileno(stdout), _O_U8TEXT);
@@ -49,16 +45,16 @@ void RestServer::run() const {
 }
 
 void RestServer::setupRoutes(crow::SimpleApp &app) const {
-    CROW_ROUTE(app, "/tasks").methods(crow::HTTPMethod::GET)([this]() {
+    CROW_ROUTE(app, "/api/tasks").methods(crow::HTTPMethod::GET)([this]() {
         return handleGetAllTasks();
     });
-    CROW_ROUTE(app, "/tasks").methods(crow::HTTPMethod::POST)([this](const crow::request &req) {
+    CROW_ROUTE(app, "/api/tasks").methods(crow::HTTPMethod::POST)([this](const crow::request &req) {
         return handleAddTask(req);
     });
-    CROW_ROUTE(app, "/tasks/<int>").methods(crow::HTTPMethod::Delete)([this](int id) {
+    CROW_ROUTE(app, "/api/tasks/<int>").methods(crow::HTTPMethod::Delete)([this](int id) {
         return handleRemoveTask(id);
     });
-    CROW_ROUTE(app, "/tasks/<int>").methods(crow::HTTPMethod::PATCH)
+    CROW_ROUTE(app, "/api/tasks/<int>").methods(crow::HTTPMethod::PATCH)
     ([this](const crow::request &req, int id) {
         return handleUpdateTask(req, id);
     });
@@ -73,9 +69,12 @@ crow::response RestServer::handleGetAllTasks() const {
 crow::response RestServer::handleAddTask(const crow::request &req) const {
     try {
         const auto json = nlohmann::json::parse(req.body);
-        const CreateTaskDto dto = json.get<CreateTaskDto>();
-        manager_.addTask(dto.title);
-        return createTextResponse(HTTP_CREATED, MSG_TASK_CREATED);
+        const auto dto = json.get<CreateTaskDto>();
+        // ↓↓↓ ZDE JE ÚPRAVA PRO REST CHOVÁNÍ ↓↓↓
+        Task task = manager_.addTask(dto.title); // Vrací nově vytvořený Task
+        auto dtoResponse = TaskMapper::toDto(task);
+        auto jsonResponse = nlohmann::json(dtoResponse);
+        return createJsonResponse(HTTP_CREATED, jsonResponse.dump());
     } catch ([[maybe_unused]] const nlohmann::json::exception &e) {
         return createTextResponse(HTTP_BAD_REQUEST, MSG_INVALID_JSON);
     } catch ([[maybe_unused]] const std::exception &e) {
@@ -83,7 +82,6 @@ crow::response RestServer::handleAddTask(const crow::request &req) const {
     }
 }
 
-// Tato metoda může být static, protože nepotřebuje přístup k this
 nlohmann::json RestServer::convertTasksToJson(const std::vector<Task> &tasks) {
     nlohmann::json jsonResponse = nlohmann::json::array();
     for (const auto &task: tasks) {
@@ -123,10 +121,15 @@ crow::response RestServer::processTaskUpdate(const UpdateTaskDto &dto, int id) c
         return createTextResponse(HTTP_NOT_FOUND, MSG_TASK_NOT_FOUND);
     }
 
+    // Zde můžeš vracet buď aktualizovaný task jako JSON, nebo jen text.
+    // Pro REST správnost doporučuji JSON, např.:
+    // Task updatedTask = manager_.getTaskById(id); (pokud máš)
+    // auto dtoResponse = TaskMapper::toDto(updatedTask);
+    // auto jsonResponse = nlohmann::json(dtoResponse);
+    // return createJsonResponse(HTTP_OK, jsonResponse.dump());
     return createTextResponse(HTTP_OK, MSG_TASK_UPDATED);
 }
 
-// Tyto metody mohou být static, protože nepotřebují přístup k this
 crow::response RestServer::createJsonResponse(int statusCode, const std::string &content) {
     crow::response res(statusCode, content);
     res.add_header("Content-Type", JSON_CONTENT_TYPE);
