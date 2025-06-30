@@ -1,0 +1,180 @@
+openapi: 3.0.0
+info:
+  title: Todo API
+  description: API pro správu úkolů v Todo aplikaci
+  version: 1.0.0
+servers:
+  - url: http://localhost:18080/api
+    description: Lokální vývojový server s API prefixem
+paths:
+  /tasks:
+    get:
+      summary: Získá seznam všech úkolů
+      description: Vrátí seznam všech úkolů v systému
+      responses:
+        '200':
+          description: Seznam úkolů byl úspěšně získán
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+              example: [
+                {
+                  "id": 1,
+                  "title": "Koupit mléko",
+                  "done": false
+                },
+                {
+                  "id": 2,
+                  "title": "Zavolat mamince",
+                  "done": true
+                }
+              ]
+    post:
+      summary: Vytvoří nový úkol
+      description: Přidá nový úkol do systému
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTask'
+            example:
+              title: "Nakoupit potraviny"
+      responses:
+        '201':
+          description: Úkol byl úspěšně vytvořen
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+              example:
+                message: "Task created successfully"
+        '400':
+          description: Neplatný formát JSON nebo chybějící povinná pole
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Invalid JSON format or missing required fields"
+        '500':
+          description: Interní chyba serveru
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Internal server error"
+  /tasks/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: ID úkolu
+        schema:
+          type: integer
+    delete:
+      summary: Odstraní úkol
+      description: Odstraní úkol podle zadaného ID
+      responses:
+        '200':
+          description: Úkol byl úspěšně odstraněn
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                required:
+                  - success
+                  - message
+              example:
+                success: true
+                message: "Úkol byl úspěšně odstraněn"
+        '404':
+          description: Úkol nebyl nalezen
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  error:
+                    type: string
+                required:
+                  - success
+                  - error
+              example:
+                success: false
+                error: "Úkol s ID 42 nebyl nalezen"
+    patch:
+      summary: Aktualizuje stav úkolu
+      description: Označí úkol jako dokončený
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTask'
+            example:
+              done: true
+      responses:
+        '200':
+          description: Úkol byl úspěšně aktualizován
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+              example:
+                message: "Task updated"
+        '400':
+          description: Neplatný požadavek
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+              example:
+                error: "Invalid request"
+        '404':
+          description: Úkol nebyl nalezen
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+              example:
+                error: "Task not found"
+        '500':
+          description: Interní chyba serveru
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+              example:
+                error: "Internal server error"
+components:
+  schemas:
+    Task:
+      type: object
+      properties:
+        id:
+          type: integer
