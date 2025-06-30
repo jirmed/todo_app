@@ -136,25 +136,16 @@ endif ()
 include(GoogleTest)
 enable_testing()
 file(GLOB_RECURSE ALL_TEST_FILES "${TESTS_DIR}/**/*_test.cpp")
-foreach (TEST_FILE ${ALL_TEST_FILES})
-    get_filename_component(TEST_NAME ${TEST_FILE} NAME_WE)
-    add_executable(${TEST_NAME} ${TEST_FILE})
-    target_include_directories(${TEST_NAME} PRIVATE ${TESTS_DIR})
-    target_link_libraries(${TEST_NAME} PRIVATE ${LIB_NAME} gtest_main gtest)
-    if (WIN32 AND ${BUILD_TYPE} STREQUAL "Debug")
-        set_target_properties(${TEST_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${RUNTIME_DEBUG_BIN})
-    endif ()
-    gtest_discover_tests(${TEST_NAME}
-            WORKING_DIRECTORY "$<TARGET_FILE_DIR:${TEST_NAME}>"
-            PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "$<TARGET_FILE_DIR:${TEST_NAME}>"
-            TEST_PREFIX "${TEST_NAME}."
-            TEST_LIST ${TEST_NAME}_TESTS
-    )
-    set_property(GLOBAL PROPERTY TEST_DISCOVERY_TIMEOUT 60)
-endforeach ()
+
 add_executable(${TEST_EXECUTABLE_NAME} ${ALL_TEST_FILES})
-target_include_directories(${TEST_EXECUTABLE_NAME} PRIVATE ${TESTS_DIR}/unit)
+target_include_directories(${TEST_EXECUTABLE_NAME} PRIVATE ${TESTS_DIR})
 target_link_libraries(${TEST_EXECUTABLE_NAME} PRIVATE ${LIB_NAME} gtest_main gtest)
+
 if (WIN32 AND ${BUILD_TYPE} STREQUAL "Debug")
     set_target_properties(${TEST_EXECUTABLE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${RUNTIME_DEBUG_BIN})
 endif ()
+
+gtest_discover_tests(${TEST_EXECUTABLE_NAME}
+        WORKING_DIRECTORY "$<TARGET_FILE_DIR:${TEST_EXECUTABLE_NAME}>"
+        PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "$<TARGET_FILE_DIR:${TEST_EXECUTABLE_NAME}>"
+)
