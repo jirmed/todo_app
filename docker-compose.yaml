@@ -1,0 +1,26 @@
+version: "3.8"
+
+services:
+  backend:
+    build:
+      context: ./backend
+    expose:
+      - "18080"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    expose:
+      - "80"
+    restart: unless-stopped
+
+  proxy:
+    build:
+      context: ./nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped
