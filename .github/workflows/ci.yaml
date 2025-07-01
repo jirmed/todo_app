@@ -38,3 +38,19 @@ jobs:
           push: true
           tags: ghcr.io/jirmed/todo-backend:latest
           platforms: linux/arm64
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: ghcr.io/jirmed/todo-frontend:latest
+          platforms: linux/arm64
+
+      - name: Build and push proxy image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./nginx
+          push: true
+          tags: ghcr.io/jirmed/todo-proxy:latest
+          platforms: linux/arm64
