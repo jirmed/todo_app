@@ -3,24 +3,18 @@ version: "3.8"
 services:
   backend:
     image: ghcr.io/jirmed/todo-backend:latest
-    build:
-      context: ./backend
     expose:
       - "18080"
     restart: unless-stopped
 
   frontend:
     image: ghcr.io/jirmed/todo-frontend:latest
-    build:
-      context: ./frontend
     expose:
       - "80"
     restart: unless-stopped
 
   proxy:
     image: ghcr.io/jirmed/todo-proxy:latest
-    build:
-      context: ./nginx
     ports:
       - "80:80"
     depends_on:
