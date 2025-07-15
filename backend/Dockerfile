@@ -13,10 +13,11 @@ RUN apk add --no-cache \
         git \
         linux-headers \
         ccache \
-    && ccache -M 150M   # velikost cache ~150 MB (upravit dle potřeby)
+    && ccache -M 150M   # velikost cache ~150MB
 
 ENV CCACHE_DIR=/ccache
-ENV CMAKE_GENERATOR=Ninja   # rychlejší paralelní build
+ENV CMAKE_GENERATOR=Ninja
+# rychlejší paralelní build
 
 ################################################################################
 # STAGE 1 – závislosti, které se mění zřídka (Crow, Asio, nlohmann::json, …)
@@ -28,7 +29,7 @@ WORKDIR /deps
 # Zkopíruj pouze soubory, které určují VERZE závislostí.
 # Při změně vlastního kódu zůstanou tyto vrstvy v cache.
 COPY CMakeLists.txt .
-COPY cmake/ cmake/          # pokud máte FetchContent v cmake/skriptech
+COPY cmake/ cmake/
 
 # Build pouze dependencies – žádný aplikační kód.
 # Využívá BuildKit cache‑mount pro uložení ccache artefaktů.
