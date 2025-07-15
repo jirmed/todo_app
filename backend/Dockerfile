@@ -3,7 +3,7 @@
 ################################################################################
 # STAGE 0 – společný základ se všemi build nástroji + ccache
 ################################################################################
-FROM --platform=$BUILDPLATFORM alpine:3.20 AS build-base
+FROM alpine:3.20 AS build-base
 
 # build-base obsahuje kompilátory, CMake, Ninja a ccache
 RUN apk add --no-cache \
@@ -70,7 +70,7 @@ RUN --mount=type=cache,target=/ccache \
 ################################################################################
 # STAGE 3 – minimální runtime image
 ################################################################################
-FROM --platform=$TARGETPLATFORM alpine:3.20
+FROM alpine:3.20
 
 RUN apk add --no-cache libstdc++ libgcc
 
