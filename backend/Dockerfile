@@ -29,7 +29,6 @@ WORKDIR /deps
 # Zkopíruj pouze soubory, které určují VERZE závislostí.
 # Při změně vlastního kódu zůstanou tyto vrstvy v cache.
 COPY CMakeLists.txt .
-COPY cmake/ cmake/
 
 # Build pouze dependencies – žádný aplikační kód.
 # Využívá BuildKit cache‑mount pro uložení ccache artefaktů.
