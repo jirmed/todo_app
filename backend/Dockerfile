@@ -5,21 +5,31 @@ RUN apk add --no-cache build-base cmake git linux-headers
 
 WORKDIR /src
 
-# ────────────────┤ FÁZE 1: Stažení pouze závislostí ├───────────────
-# Kopíruj pouze soubor se závislostmi
-COPY deps.cmake ./
-
-# Stáhni pouze závislosti (bez zdrojového kódu)
-RUN cmake -S . -B build-deps -f deps.cmake -DCMAKE_BUILD_TYPE=Release
-
-# ────────────────┤ FÁZE 2: Build aplikace ├───────────────
-# Kopíruj vše ostatní
+# ────────────────┤ FÁZE 1: Cache Dependencies ├───────────────
+# Kopíruj pouze CMakeLists.txt pro stažení závislostí
 COPY CMakeLists.txt ./
+
+# Vytvoř prázdné src a tests složky, aby cmake našel co potřebuje
+RUN mkdir -p src tests
+
+# Vytvoř prázdný main.cpp, aby cmake mohl běžet
+RUN echo "int main(){return 0;}" > src/main.cpp
+
+# Stáhni všechny závislosti (tohle se cachuje!)
+RUN cmake -Bbuild -DCMAKE_BUILD_TYPE=Release
+
+# ────────────────┤ FÁZE 2: Build Real App ├───────────────
+# Smaž dummy soubory a zkopíruj skutečné zdrojáky
+RUN rm -rf src tests
+
+# Zkopíruj skutečné zdrojáky
 COPY src/ ./src/
 COPY tests/ ./tests/
 
-# Build aplikace - závislosti už jsou cacheované!
+# Znovu konfiguruj s pravými soubory (rychlé, závislosti už jsou stažené)
 RUN cmake -Bbuild -DCMAKE_BUILD_TYPE=Release
+
+# Build aplikaci
 RUN cmake --build build --target todo-server --config Release
 
 # Runtime stage
