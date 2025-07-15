@@ -54,3 +54,28 @@ jobs:
           push: true
           tags: ghcr.io/jirmed/todo-proxy:latest
           platforms: linux/arm64
+  deploy:
+    needs: build-backend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Prepare SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+
+      - name: Add server to known_hosts
+        run: |
+          ssh-keyscan -H 130.61.16.89 ~/.ssh/known_hosts
+
+      - name: Deploy stack over SSH
+        env:
+          SSH_USER: ubuntu
+          SSH_HOST: 130.61.16.89
+        run: |
+          scp -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=yes docker-compose.yaml $SSH_USER@$SSH_HOST:/home/ubuntu/
+          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=yes $SSH_USER@$SSH_HOST "docker stack deploy -c /home/ubuntu/docker-compose.yaml todoapp"
