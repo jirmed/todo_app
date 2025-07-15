@@ -1,0 +1,12 @@
+cmake_minimum_required(VERSION 3.25)
+project(todo_app_deps)
+
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+# Pouze stáhni závislosti
+include(cmake/dependencies.cmake)
+
+# Vytvoř dummy target, aby cmake project byl validní
+add_custom_target(dependencies_ready)
