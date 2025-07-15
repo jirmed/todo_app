@@ -5,20 +5,20 @@ RUN apk add --no-cache build-base cmake git linux-headers
 
 WORKDIR /src
 
-# ────────────────┤ FÁZE 1: Stažení závislostí ├───────────────
-# Kopíruj pouze soubory pro závislosti
-COPY cmake/ ./cmake/
+# ────────────────┤ FÁZE 1: Stažení pouze závislostí ├───────────────
+# Kopíruj pouze soubor se závislostmi
+COPY CMakeLists.deps.txt ./
 
-# Stáhni pouze závislosti (bez zdrojáků)
-RUN cmake -S cmake -B build-deps -f deps-only.cmake -DCMAKE_BUILD_TYPE=Release
+# Stáhni pouze závislosti (bez zdrojového kódu)
+RUN cmake -S . -B build-deps -f CMakeLists.deps.txt -DCMAKE_BUILD_TYPE=Release
 
 # ────────────────┤ FÁZE 2: Build aplikace ├───────────────
-# Teď zkopíruj vše ostatní
+# Kopíruj vše ostatní
 COPY CMakeLists.txt ./
 COPY src/ ./src/
 COPY tests/ ./tests/
 
-# Použij existující cache se stažtenými závislostmi
+# Build aplikace - závislosti už jsou cacheované!
 RUN cmake -Bbuild -DCMAKE_BUILD_TYPE=Release
 RUN cmake --build build --target todo-server --config Release
 
