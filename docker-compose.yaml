@@ -1,29 +1,55 @@
 version: "3.8"
 
 services:
+  traefik:
+    image: traefik:v2.11
+    command:
+      - "--api.insecure=true"  # pouze pro vývoj, později vypnout!
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.email=jiri.medved@konzult.net"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "letsencrypt:/letsencrypt"
+    networks:
+      - traefik
+
   backend:
     image: ghcr.io/jirmed/todo-backend:latest
-    build:
-      context: ./backend
     expose:
       - "18080"
-    restart: unless-stopped
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.todo-backend.rule=Host(`todo.konzut.net`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.todo-backend.entrypoints=websecure"
+      - "traefik.http.routers.todo-backend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.todo-backend.loadbalancer.server.port=18080"
 
   frontend:
     image: ghcr.io/jirmed/todo-frontend:latest
-    build:
-      context: ./frontend
     expose:
       - "80"
-    restart: unless-stopped
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.todo-frontend.rule=Host(`todo.konzut.net`)"
+      - "traefik.http.routers.todo-frontend.entrypoints=websecure"
+      - "traefik.http.routers.todo-frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.todo-frontend.loadbalancer.server.port=80"
 
-  proxy:
-    image: ghcr.io/jirmed/todo-proxy:latest
-    build:
-      context: ./nginx
-    ports:
-      - "80:80"
-    depends_on:
-      - frontend
-      - backend
-    restart: unless-stopped
+volumes:
+  letsencrypt:
+
+networks:
+  traefik:
+    external: true
