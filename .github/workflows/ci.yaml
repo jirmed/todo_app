@@ -38,8 +38,10 @@ jobs:
           push: true
           tags: ghcr.io/jirmed/todo-backend:latest
           platforms: linux/arm64
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: |
+            type=gha,scope=backend
+            type=registry,ref=ghcr.io/jirmed/todo-backend:latest
+          cache-to: type=gha,mode=max,scope=backend
 
       - name: Build and push frontend image
         uses: docker/build-push-action@v5
@@ -48,8 +50,10 @@ jobs:
           push: true
           tags: ghcr.io/jirmed/todo-frontend:latest
           platforms: linux/arm64
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: |
+            type=gha,scope=frontend
+            type=registry,ref=ghcr.io/jirmed/todo-frontend:latest
+          cache-to: type=gha,mode=max,scope=frontend
 
       - name: Build and push proxy image
         uses: docker/build-push-action@v5
@@ -58,8 +62,10 @@ jobs:
           push: true
           tags: ghcr.io/jirmed/todo-proxy:latest
           platforms: linux/arm64
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: |
+            type=gha,scope=proxy
+            type=registry,ref=ghcr.io/jirmed/todo-proxy:latest
+          cache-to: type=gha,mode=max,scope=proxy
   deploy:
     needs: build-backend
     runs-on: ubuntu-latest
