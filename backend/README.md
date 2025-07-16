@@ -20,4 +20,4 @@ Aplikace pro správu úkolů s REST API.
 
 ## Sestavení a spuštění
 
-...
+
