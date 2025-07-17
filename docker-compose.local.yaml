@@ -4,7 +4,7 @@ services:
   traefik:
     image: traefik:v2.11
     command:
-      - "--api.insecure=true"
+      - "--api.insecure=true"  # pouze pro vývoj
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
