@@ -90,4 +90,5 @@ jobs:
           SSH_HOST: ${{ vars.host_ip }}
         run: |
           scp -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=yes docker-compose.yaml $SSH_USER@$SSH_HOST:/home/ubuntu/
+          scp -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=yes docker-compose.prod.yaml $SSH_USER@$SSH_HOST:/home/ubuntu/
           ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=yes $SSH_USER@$SSH_HOST "docker stack deploy -c /home/ubuntu/docker-compose.yaml -c /home/ubuntu/docker-compose.prod.yaml todoapp"
