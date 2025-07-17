@@ -20,7 +20,8 @@ services:
       context: ./backend
       dockerfile: Dockerfile
       # zvolte stage, ve které je runtime
-      target: run
+      target: build
+    working_dir: /app/build
     command: ["./todo-server", "--listen", "0.0.0.0:18080"]
     volumes:
       - "./backend:/app/src:ro"
