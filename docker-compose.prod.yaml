@@ -1,0 +1,29 @@
+services:
+  traefik:
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.email=jiri.medved@konzult.net"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+    ports: ["80:80", "443:443"]
+    volumes:
+      - "letsencrypt:/letsencrypt"
+
+  backend:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.todo-backend.rule=Host(`todo.konzult.net`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.todo-backend.entrypoints=websecure"
+      - "traefik.http.routers.todo-backend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.todo-backend.loadbalancer.server.port=18080"
+
+  frontend:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.todo-frontend.rule=Host(`todo.konzult.net`)"
+      - "traefik.http.routers.todo-frontend.entrypoints=websecure"
+      - "traefik.http.routers.todo-frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.todo-frontend.loadbalancer.server.port=80"

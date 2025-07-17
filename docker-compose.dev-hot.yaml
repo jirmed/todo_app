@@ -1,8 +1,5 @@
-version: "3.8"
-
 services:
   traefik:
-    image: traefik:v2.11
     command:
       - "--api.insecure=true"
       - "--providers.docker=true"
@@ -10,59 +7,40 @@ services:
       - "--entrypoints.web.address=:80"
     ports:
       - "80:80"
-      - "8080:8080"  # Dashboard pro traefik
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
-    networks:
-      - traefik
+      - "8080:8080"        # dashboard
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.dashboard.rule=Host(`localhost`) && (PathPrefix(`/api/dashboard`) || PathPrefix(`/dashboard`))"
       - "traefik.http.routers.dashboard.service=api@internal"
-      - "traefik.http.routers.dashboard.entrypoints=web"
 
-  backend-dev:
+  backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-      target: build  # Použít pouze build stage z Dockerfile
-    working_dir: /app/build
-    command: ["./todo-server"]
+      # zvolte stage, ve které je runtime
+      target: run
+    command: ["./todo-server", "--listen", "0.0.0.0:18080"]
     volumes:
-      - "./backend:/app:ro"  # Sdílení celého adresáře projektu
-    networks:
-      - traefik
-    ports:
-      - "18080:18080"  # Pro přímý přístup
+      - "./backend:/app/src:ro"
+    expose: ["18080"]        # pro jistotu zůstává
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.todo-backend.rule=Host(`localhost`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.todo-backend.entrypoints=web"
       - "traefik.http.services.todo-backend.loadbalancer.server.port=18080"
 
-  frontend-dev:
+  frontend:
     image: node:20-alpine
     working_dir: /app
-    command: ["sh", "-c", "npm install && npm run dev"]
+    command: |
+      sh -c "npm install && npm run dev -- --strictPort --host 0.0.0.0"
     volumes:
-      - "./frontend:/app"  # Mountování celé složky projektu
-      - "frontend-node-modules:/app/node_modules"  # Pro lepší výkon
-    environment:
-      - NODE_ENV=development
-      - CHOKIDAR_USEPOLLING=true  # Pro detekci změn v Docker
-      - VITE_API_URL=/api  # Bude proxováno přes Traefik
-    networks:
-      - traefik
-    ports:
-      - "5173:5173"  # Vite vývojový server
+      - "./frontend:/app"
+      - "frontend-node-modules:/app/node_modules"
+    expose: ["5173"]
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.todo-frontend.rule=Host(`localhost`) && !PathPrefix(`/api`)"
-      - "traefik.http.routers.todo-frontend.entrypoints=web"
       - "traefik.http.services.todo-frontend.loadbalancer.server.port=5173"
 
 volumes:
-  frontend-node-modules:  # Persistentní volume pro node_modules
-
-networks:
-  traefik:
+  frontend-node-modules:
