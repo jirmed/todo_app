@@ -1,0 +1,49 @@
+version: "3.8"
+
+services:
+  traefik:
+    image: traefik:v2.11
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8080:8080"  # Dashboard pro traefik
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.rule=Host(`localhost`) && (PathPrefix(`/api/dashboard`) || PathPrefix(`/dashboard`))"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.entrypoints=web"
+
+  backend:
+    image: ghcr.io/jirmed/todo-backend:latest
+    expose:
+      - "18080"
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.todo-backend.rule=Host(`localhost`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.todo-backend.entrypoints=web"
+      - "traefik.http.services.todo-backend.loadbalancer.server.port=18080"
+
+  frontend:
+    image: ghcr.io/jirmed/todo-frontend:latest
+    expose:
+      - "80"
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.todo-frontend.rule=Host(`localhost`)"
+      - "traefik.http.routers.todo-frontend.entrypoints=web"
+      - "traefik.http.services.todo-frontend.loadbalancer.server.port=80"
+
+networks:
+  traefik:

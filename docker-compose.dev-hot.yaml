@@ -1,0 +1,68 @@
+version: "3.8"
+
+services:
+  traefik:
+    image: traefik:v2.11
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8080:8080"  # Dashboard pro traefik
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.rule=Host(`localhost`) && (PathPrefix(`/api/dashboard`) || PathPrefix(`/dashboard`))"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.entrypoints=web"
+
+  backend-dev:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: build  # Použít pouze build stage z Dockerfile
+    working_dir: /app/build
+    command: ["./todo-server"]
+    volumes:
+      - "./backend:/app:ro"  # Sdílení celého adresáře projektu
+    networks:
+      - traefik
+    ports:
+      - "18080:18080"  # Pro přímý přístup
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.todo-backend.rule=Host(`localhost`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.todo-backend.entrypoints=web"
+      - "traefik.http.services.todo-backend.loadbalancer.server.port=18080"
+
+  frontend-dev:
+    image: node:20-alpine
+    working_dir: /app
+    command: ["sh", "-c", "npm install && npm run dev"]
+    volumes:
+      - "./frontend:/app"  # Mountování celé složky projektu
+      - "frontend-node-modules:/app/node_modules"  # Pro lepší výkon
+    environment:
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true  # Pro detekci změn v Docker
+      - VITE_API_URL=/api  # Bude proxováno přes Traefik
+    networks:
+      - traefik
+    ports:
+      - "5173:5173"  # Vite vývojový server
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.todo-frontend.rule=Host(`localhost`) && !PathPrefix(`/api`)"
+      - "traefik.http.routers.todo-frontend.entrypoints=web"
+      - "traefik.http.services.todo-frontend.loadbalancer.server.port=5173"
+
+volumes:
+  frontend-node-modules:  # Persistentní volume pro node_modules
+
+networks:
+  traefik:
