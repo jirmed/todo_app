@@ -11,5 +11,10 @@
       <file path="$PROJECT_DIR$/backend/src" />
       <file path="$PROJECT_DIR$/backend/tests" />
     </sourceRoots>
+    <excludeRoots>
+      <file path="$PROJECT_DIR$/backend/cmake-build-debug" />
+      <file path="$PROJECT_DIR$/backend/cmake-build-release" />
+      <file path="$PROJECT_DIR$/frontend" />
+    </excludeRoots>
   </component>
 </project>
