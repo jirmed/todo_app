@@ -11,7 +11,8 @@ namespace {
     constexpr char TASK_NOT_DONE_MARKER = '0';
 }
 
-FileRepository::FileRepository(const std::string &filePath) : filePath_(filePath) {
+FileRepository::FileRepository(std::string filePath)
+    : filePath_(std::move(filePath)) {
     if (!std::filesystem::exists(filePath_)) {
         std::ofstream ofs(filePath_);
     }

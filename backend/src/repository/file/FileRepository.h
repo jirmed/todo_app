@@ -8,7 +8,6 @@
 
 class FileRepository final : public TaskRepository {
 public:
-    explicit FileRepository(const std::string &filePath);
 
     Task addTask(std::string_view title) override;
 
@@ -16,9 +15,11 @@ public:
 
     bool removeTaskById(std::size_t id) override;
 
-    std::optional<Task> getTaskById(std::size_t id) const override;
+    [[nodiscard]] std::optional<Task> getTaskById(std::size_t id) const override;
 
-    std::vector<Task> getAllTasks() const override;
+    explicit FileRepository(std::string filePath);
+
+    [[nodiscard]] std::vector<Task> getAllTasks() const override;
 
 private:
     void loadFromFile();

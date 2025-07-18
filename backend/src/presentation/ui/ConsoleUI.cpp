@@ -12,9 +12,6 @@ ConsoleUI::ConsoleUI(TaskManager& manager) : manager_(manager) {
     // Nastavení UTF-8 pro Windows
     SetConsoleCP(CP_UTF8);
     SetConsoleOutputCP(CP_UTF8);
-    // Nepoužíváme _O_U8TEXT, protože může způsobit problémy s std::cout
-    // _setmode(_fileno(stdout), _O_U8TEXT);
-    // _setmode(_fileno(stdin), _O_U8TEXT);
 #endif
 }
 
@@ -132,7 +129,7 @@ void ConsoleUI::handleAddTask() {
     std::string title = promptForNewTaskTitle();
     
     if (!title.empty()) {
-        manager_.addTask(title);
+        [[maybe_unused]] auto task = manager_.addTask(title);
         notifySuccess(messages::get(messages::MessageKey::TASK_ADDED));
     }
 }

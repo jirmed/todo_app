@@ -65,10 +65,10 @@ crow::response RestServer::handleGetAllTasks() const {
 crow::response RestServer::handleAddTask(const crow::request &req) const {
     try {
         const auto json = nlohmann::json::parse(req.body);
-        const auto dto = json.get<CreateTaskDto>();
-        Task task = manager_.addTask(dto.title);
+        const auto [title] = json.get<CreateTaskDto>();
+        const Task task = manager_.addTask(title);
         auto dtoResponse = TaskMapper::toDto(task);
-        auto jsonResponse = nlohmann::json(dtoResponse);
+        const auto jsonResponse = nlohmann::json(dtoResponse);
         return createJsonResponse(HTTP_CREATED, jsonResponse.dump());
     } catch (const nlohmann::json::exception &) {
         return createTextResponse(HTTP_BAD_REQUEST, MSG_INVALID_JSON);

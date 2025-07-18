@@ -16,15 +16,15 @@ public:
     void run();
     
     // --- VEŘEJNÉ METODY PRO PŘÍMÉ VOLÁNÍ A TESTOVÁNÍ ---
-    crow::response handleGetAllTasks() const;
-    crow::response handleAddTask(const crow::request& req) const;
-    crow::response handleRemoveTask(int id) const;
-    crow::response handleUpdateTask(const crow::request& req, int id) const;
+    [[nodiscard]] crow::response handleGetAllTasks() const;
+    [[nodiscard]] crow::response handleAddTask(const crow::request& req) const;
+    [[nodiscard]] crow::response handleRemoveTask(int id) const;
+    [[nodiscard]] crow::response handleUpdateTask(const crow::request& req, int id) const;
 
 private:
     void setupRoutes();
     
-    crow::response processTaskUpdate(const UpdateTaskDto& dto, int id) const;
+    [[nodiscard]] crow::response processTaskUpdate(const UpdateTaskDto& dto, int id) const;
     static nlohmann::json convertTasksToJson(const std::vector<Task>& tasks);
     static crow::response createJsonResponse(int statusCode, const std::string& content);
     static crow::response createTextResponse(int statusCode, const std::string& content);

@@ -178,3 +178,27 @@ components:
       properties:
         id:
           type: integer
+        title:
+          type: string
+        done:
+          type: boolean
+      required:
+        - id
+        - title
+        - done
+
+    CreateTask:
+      type: object
+      properties:
+        title:
+          type: string
+      required:
+        - title
+
+    UpdateTask:
+      type: object
+      properties:
+        done:
+          type: boolean
+      required:
+        - done
