@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 type Task = {
     id: string | number;
     title: string;
-    completed: boolean;
+    done: boolean;
 };
 
 function App() {
@@ -42,9 +42,9 @@ function App() {
 
     // Označit jako hotovo
     const toggleTask = async (task: Task) => {
-        const updated = { ...task, completed: !task.completed };
+        const updated = { ...task, done: !task.done };
         await fetch(`/api/tasks/${task.id}`, {
-            method: 'PUT',
+            method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(updated)
         });
@@ -69,11 +69,11 @@ function App() {
                     <li key={task.id} style={{ marginBottom: 8 }}>
                         <input
                             type="checkbox"
-                            checked={task.completed}
+                            checked={task.done}
                             onChange={() => toggleTask(task)}
                             style={{ marginRight: 8 }}
                         />
-                        <span style={{ textDecoration: task.completed ? 'line-through' : undefined }}>
+                        <span style={{ textDecoration: task.done ? 'line-through' : undefined }}>
               {task.title}
             </span>
                         <button
