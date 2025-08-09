@@ -11,8 +11,12 @@ permissions:
   contents: read
   packages: write
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build-backend:
+  build-images:
     name: Build & Push Images
     runs-on: ubuntu-latest
 
@@ -41,10 +45,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Vygeneruje tagy a labels:
-      # - latest (jen na default branch)
-      # - sha-xxxxxxx
-      # - vX.Y.Z a vX.Y (pouze pro semver tagy)
       - name: Docker metadata
         id: meta
         uses: docker/metadata-action@v5
@@ -53,14 +53,15 @@ jobs:
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=sha,prefix=sha-,format=short
-            type=semver,pattern={{version}},enable={{is_semver}}
-            type=semver,pattern={{major}}.{{minor}},enable={{is_semver}}
+            type=semver,pattern={{version}},prefix=v
+            type=semver,pattern={{major}}.{{minor}},prefix=v
+            type=semver,pattern={{major}},prefix=v
 
       - name: Build and push ${{ matrix.component.name }} image
         uses: docker/build-push-action@v5
         with:
           context: ${{ matrix.component.context }}
-          push: true
+          push: ${{ github.event_name != 'pull_request' }}
           platforms: linux/arm64,linux/amd64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -70,8 +71,9 @@ jobs:
           cache-to: type=gha,mode=max,scope=${{ matrix.component.name }}
 
   deploy:
-    needs: build-backend
+    needs: build-images
     runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
 
     steps:
       - name: Checkout repository
@@ -85,7 +87,7 @@ jobs:
 
       - name: Add server to known_hosts
         run: |
-          ssh-keyscan -H ${{ vars.host_ip }} >> ~/.ssh/known_hosts
+          ssh-keyscan -t ed25519 -H ${{ vars.host_ip }} >> ~/.ssh/known_hosts
 
       - name: Deploy stack over SSH
         env:
