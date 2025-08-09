@@ -1,54 +1,55 @@
-FROM alpine:3.22 AS base
+# syntax=docker/dockerfile:1.7
 
-RUN apk update \
-    && apk add --no-cache \
-    build-base \
-    curl \
-    git \
-    unzip \
-    musl-dev \
-    openssl \
-    bash \
-    cmake \
-    linux-headers \
-    && rm -rf /var/cache/apk/*
+# ========= Toolchain base =========
+FROM alpine:3.22 AS base
+RUN apk add --no-cache \
+    build-base cmake ninja git curl unzip bash linux-headers ccache
 
 WORKDIR /app
 
-# 🧪 Fetch dependencies — samostatně cacheovatelná vrstva
+# ========= Deps (configure + FetchContent) =========
 FROM base AS deps
 
+COPY CMakeLists.txt ./
 COPY cmake/ cmake/
-COPY CMakeLists.txt .
 
-RUN mkdir -p src tests
+RUN --mount=type=cache,target=/root/.cache/ccache \
+    mkdir -p src && echo 'void dummy() {}' > src/dummy.cpp && \
+    cmake -B build -S . \
+      -G Ninja \
+      -DBUILD_TESTING=OFF \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+      -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
-# Pouze stáhni závislosti (žádný --build target není potřeba)
-RUN mkdir -p src && echo 'void dummy() {}' > src/dummy.cpp
-RUN cmake -B build -S . -DBUILD_TESTING=OFF
-
-
-# 🧩 Build project — pouze aplikace (bez testů)
+# ========= Build (kompilace app) =========
 FROM base AS build
-
 WORKDIR /app
 
-# Kopíruj dependencies z build _deps, NE z /app/_deps
-COPY --from=deps /app/build/_deps/ /app/build/_deps/
+COPY --from=deps /app/build /app/build
+COPY --from=deps /app/cmake /app/cmake
+COPY --from=deps /app/CMakeLists.txt /app/CMakeLists.txt
+
 COPY src/ src/
-COPY CMakeLists.txt .
-COPY cmake/ cmake/
 
-RUN cmake -B build -S . -DBUILD_TESTING=OFF \
- && cmake --build build --target todo-server
+RUN --mount=type=cache,target=/root/.cache/ccache \
+    cmake -B build -S . \
+      -G Ninja \
+      -DBUILD_TESTING=OFF \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+      -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+      -DCMAKE_INSTALL_PREFIX=/opt/app \
+ && cmake --build build --target install \
+ && strip /opt/app/bin/todo-server || true
 
-# 🏁 Final image – Alpine runtime (malé)
+# ========= Final (runtime) =========
 FROM alpine:3.22 AS final
+RUN apk add --no-cache libstdc++ ca-certificates
+WORKDIR /opt/app
+COPY --from=build /opt/app /opt/app
 
-# Nutná runtime závislost (libstdc++)
-RUN apk add --no-cache libstdc++ curl
+RUN adduser -D -H app && chown -R app:app /opt/app
+USER app
 
-WORKDIR /app
-COPY --from=build /app/build/todo-server .
-
-CMD ["./todo-server"]
+CMD ["/opt/app/bin/todo-server"]
