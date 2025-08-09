@@ -57,3 +57,16 @@ docker exec <container_id> cat /app/version.txt
 
 Nebo si prohlédnout historii nasazení v souboru `/home/ubuntu/deployment_history.log` na produkčním serveru.
 
+## Ověření tagů v GHCR
+
+Po vytvoření a push Git tagu ve formátu `v*.*.*` můžete zkontrolovat, že byly správně vytvořeny tagy pro Docker obrazy:
+
+1. Přejděte na https://github.com/jirmed?tab=packages
+2. Vyberte požadovaný package (např. todo-backend)
+3. V sekci "Versions" by se měly zobrazit nové tagy: např. `v1.0.0`, `1.0`, `latest`, `sha-abcdef1`
+
+Pokud nevidíte očekávané tagy, zkontrolujte, že:
+- CI/CD pipeline proběhla úspěšně
+- Git tag má správný formát `v*.*.*` (např. v1.0.0)
+- CI/CD má nastavený trigger pro tag events
+

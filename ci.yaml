@@ -20,6 +20,8 @@ on:
       - main
     tags:
       - 'v*.*.*'
+    tags:
+      - 'v*.*.*'
   pull_request:
 
 permissions:
