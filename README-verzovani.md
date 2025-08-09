@@ -56,3 +56,4 @@ docker exec <container_id> cat /app/version.txt
 ```
 
 Nebo si prohlédnout historii nasazení v souboru `/home/ubuntu/deployment_history.log` na produkčním serveru.
+
