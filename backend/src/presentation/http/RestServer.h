@@ -25,7 +25,11 @@ public:
 
 private:
     void setupRoutes();
-    
+
+    crow::response handleHealth() const;
+
+    crow::response handleReady() const;
+
     [[nodiscard]] crow::response processTaskUpdate(const UpdateTaskDto& dto, int id) const;
     static nlohmann::json convertTasksToJson(const std::vector<Task>& tasks);
     static crow::response createJsonResponse(int statusCode, const std::string& content);

@@ -6,7 +6,6 @@
 #include "presentation/http/dto/TaskDto.h"
 #include <nlohmann/json.hpp>
 
-// Hlavičkové soubory pro Windows zůstanou, pokud je bude potřebovat jiná část Crow
 #ifdef _WIN32
 #include <windows.h>
 #include <io.h>
@@ -14,7 +13,6 @@
 #endif
 
 namespace {
-    // ... (zbytek konstant zůstává stejný)
     constexpr int DEFAULT_PORT = 18080;
     constexpr int HTTP_OK = 200;
     constexpr int HTTP_CREATED = 201;
@@ -31,7 +29,6 @@ namespace {
     const std::string MSG_INTERNAL_ERROR = "Internal server error";
 }
 
-// Konstruktor je nyní čistý a bez vedlejších efektů
 RestServer::RestServer(TaskManager &manager) : manager_(manager) {
     setupRoutes();
 }
@@ -41,6 +38,15 @@ void RestServer::run() {
 }
 
 void RestServer::setupRoutes() {
+    // Health & readiness
+    CROW_ROUTE(app_, "/health").methods(crow::HTTPMethod::GET)([this]() {
+        return handleHealth();
+    });
+    CROW_ROUTE(app_, "/ready").methods(crow::HTTPMethod::GET)([this]() {
+        return handleReady();
+    });
+
+    // Tasks API
     CROW_ROUTE(app_, "/api/tasks").methods(crow::HTTPMethod::GET)([this]() {
         return handleGetAllTasks();
     });
@@ -54,6 +60,27 @@ void RestServer::setupRoutes() {
     ([this](const crow::request &req, int id) {
         return handleUpdateTask(req, id);
     });
+}
+
+crow::response RestServer::handleHealth() const {
+    // jednoduchá odpověď 200 OK
+    nlohmann::json j;
+    j["status"] = "ok";
+    return createJsonResponse(HTTP_OK, j.dump());
+}
+
+crow::response RestServer::handleReady() const {
+    // Ověř, že umíme sáhnout na „základní závislosti“ (tady TaskManager)
+    try {
+        (void)manager_.getAllTasks();
+        nlohmann::json j;
+        j["status"] = "ready";
+        return createJsonResponse(HTTP_OK, j.dump());
+    } catch (const std::exception &) {
+        nlohmann::json j;
+        j["status"] = "unavailable";
+        return createJsonResponse(HTTP_INTERNAL_ERROR, j.dump());
+    }
 }
 
 crow::response RestServer::handleGetAllTasks() const {
