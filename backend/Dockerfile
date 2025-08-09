@@ -22,9 +22,6 @@ RUN --mount=type=cache,target=/root/.cache/ccache \
       -DCMAKE_C_COMPILER_LAUNCHER=ccache \
       -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
-# 2) Explicitně napopuluj FetchContent dependency zdroje
-#    (názvy vycházejí z logu: json-populate, asio-populate, crow-populate)
-RUN cmake --build build --target json-populate asio-populate crow-populate --parallel
 
 # ========= Build =========
 FROM base AS build
