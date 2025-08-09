@@ -32,10 +32,6 @@ on:
       - main
     tags:
       - 'v*.*.*'
-    tags:
-      - 'v*.*.*'
-    tags:
-      - 'v*.*.*'
   pull_request:
 
 permissions:
