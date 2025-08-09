@@ -154,3 +154,4 @@ crow::response RestServer::createTextResponse(int statusCode, const std::string 
     res.add_header("Content-Type", TEXT_CONTENT_TYPE);
     return res;
 }
+
