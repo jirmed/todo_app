@@ -6,55 +6,47 @@ RUN apk add --no-cache \
     build-base cmake ninja git curl unzip bash linux-headers ccache
 WORKDIR /app
 
-# ========= Deps: stáhni a připrav FetchContent jen jednou =========
+# ========= Deps =========
 FROM base AS deps
-# Místo, kde bude FetchContent cache/sources
-ENV CMAKE_FETCHCONTENT_BASE_DIR=/deps \
-    FETCHCONTENT_UPDATES_DISCONNECTED=ON
+WORKDIR /deps
 
-# Jen soubory, které ovlivní závislosti
 COPY CMakeLists.txt ./
 COPY cmake/ cmake/
 
-# Minimální configure, aby se napopulovaly _deps do /deps
-# (header-only liby se nekompilují, jen stáhnou)
+# 1) Configure
 RUN --mount=type=cache,target=/root/.cache/ccache \
     mkdir -p src && echo 'void dummy() {}' > src/dummy.cpp && \
-    cmake -B /deps/build -S . \
-      -G Ninja \
+    cmake -B build -S . -G Ninja \
       -DBUILD_TESTING=OFF \
       -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_C_COMPILER_LAUNCHER=ccache \
-      -DCMAKE_CXX_COMPILER_LAUNCHER=ccache && \
-    cmake --build /deps/build --parallel
+      -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
-# ========= Build: přelož jen aplikaci, bez instalace 3rd-party =========
+# 2) Explicitně napopuluj FetchContent dependency zdroje
+#    (názvy vycházejí z logu: json-populate, asio-populate, crow-populate)
+RUN cmake --build build --target json-populate asio-populate crow-populate --parallel
+
+# ========= Build =========
 FROM base AS build
 WORKDIR /app
-
-# Přenes připravené FetchContent zdroje/cache
+# zkopírujeme celé /deps vč. build/_deps
 COPY --from=deps /deps /deps
-# Stejné nastavení, ale zcela "offline"
-ENV CMAKE_FETCHCONTENT_BASE_DIR=/deps \
-    FETCHCONTENT_FULLY_DISCONNECTED=ON \
-    FETCHCONTENT_UPDATES_DISCONNECTED=ON
 
-# Projektové metadatové soubory
+# vlastní zdrojáky
 COPY CMakeLists.txt ./
 COPY cmake/ cmake/
-# Až teď zdrojáky (neinvaliduje deps vrstvu)
 COPY src/ src/
 
-# Build pouze binárky (žádný 'install' – ušetří I/O)
 RUN --mount=type=cache,target=/root/.cache/ccache \
-    cmake -B build -S . \
-      -G Ninja \
+    cmake -B build -S . -G Ninja \
       -DBUILD_TESTING=OFF \
       -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_C_COMPILER_LAUNCHER=ccache \
       -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
- && cmake --build build --target todo-server --parallel \
- && strip build/todo-server || true
+      -DFETCHCONTENT_BASE_DIR=/deps/build/_deps \
+      -DFETCHCONTENT_UPDATES_DISCONNECTED=ON \
+  && cmake --build build --target todo-server --parallel \
+  && strip build/todo-server || true
 
 # ========= Final (runtime) =========
 FROM alpine:3.22 AS final
