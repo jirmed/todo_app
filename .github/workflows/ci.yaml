@@ -2,9 +2,10 @@ name: CI Backend Build
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
+    tags: [ 'v*.*.*' ]
   pull_request:
+    branches: [ main ]
 
 permissions:
   contents: read
@@ -12,7 +13,16 @@ permissions:
 
 jobs:
   build-backend:
+    name: Build & Push Images
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        component:
+          - { name: backend,  context: ./backend,  image: ghcr.io/jirmed/todo-backend }
+          - { name: frontend, context: ./frontend, image: ghcr.io/jirmed/todo-frontend }
+          - { name: proxy,    context: ./nginx,   image: ghcr.io/jirmed/todo-proxy }
 
     steps:
       - name: Checkout repository
@@ -31,41 +41,34 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push backend image
-        uses: docker/build-push-action@v5
+      # Vygeneruje tagy a labels:
+      # - latest (jen na default branch)
+      # - sha-xxxxxxx
+      # - vX.Y.Z a vX.Y (pouze pro semver tagy)
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
         with:
-          context: ./backend
-          push: true
-          tags: ghcr.io/jirmed/todo-backend:latest
-          platforms: linux/arm64, linux/amd64
-          cache-from: |
-            type=gha,scope=backend
-            type=registry,ref=ghcr.io/jirmed/todo-backend:latest
-          cache-to: type=gha,mode=max,scope=backend
+          images: ${{ matrix.component.image }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix=sha-,format=short
+            type=semver,pattern={{version}},enable={{is_semver}}
+            type=semver,pattern={{major}}.{{minor}},enable={{is_semver}}
 
-      - name: Build and push frontend image
+      - name: Build and push ${{ matrix.component.name }} image
         uses: docker/build-push-action@v5
         with:
-          context: ./frontend
+          context: ${{ matrix.component.context }}
           push: true
-          tags: ghcr.io/jirmed/todo-frontend:latest
-          platforms: linux/arm64, linux/amd64
+          platforms: linux/arm64,linux/amd64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           cache-from: |
-            type=gha,scope=frontend
-            type=registry,ref=ghcr.io/jirmed/todo-frontend:latest
-          cache-to: type=gha,mode=max,scope=frontend
+            type=gha,scope=${{ matrix.component.name }}
+            type=registry,ref=${{ matrix.component.image }}:latest
+          cache-to: type=gha,mode=max,scope=${{ matrix.component.name }}
 
-      - name: Build and push proxy image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./nginx
-          push: true
-          tags: ghcr.io/jirmed/todo-proxy:latest
-          platforms: linux/arm64, linux/amd64
-          cache-from: |
-            type=gha,scope=proxy
-            type=registry,ref=ghcr.io/jirmed/todo-proxy:latest
-          cache-to: type=gha,mode=max,scope=proxy
   deploy:
     needs: build-backend
     runs-on: ubuntu-latest
