@@ -1,0 +1,27 @@
+name: CI Backend Build
+  with:
+    fetch-depth: 0
+
+- name: Extract metadata for Docker
+  id: meta
+  uses: docker/metadata-action@v5
+  with:
+    images: ghcr.io/jirmed/todo-backend,ghcr.io/jirmed/todo-frontend,ghcr.io/jirmed/todo-proxy
+    tags: |
+      type=ref,event=branch
+      type=ref,event=pr
+      type=semver,pattern={{version}}
+      type=semver,pattern={{major}}.{{minor}}
+      type=sha,format=short
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*.*.*'
+  pull_request:
+
+permissions:
+  contents: read
+  packages: write
