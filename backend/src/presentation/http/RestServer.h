@@ -4,6 +4,8 @@
 #include <crow.h>
 #include <string>
 
+#include "SimpleCORS.h"
+
 // DTO struktura pro update, pokud je potřeba v hlavičce
 struct UpdateTaskDto;
 
@@ -31,5 +33,6 @@ private:
     
     // Členské proměnné
     TaskManager& manager_;
-    crow::SimpleApp app_; // Crow aplikace je nyní členskou proměnnou
+    crow::App<SimpleCORS> app_; // Crow aplikace je nyní členskou proměnnou
+    // crow::SimpleApp app_; // Crow aplikace je nyní členskou proměnnou
 };
