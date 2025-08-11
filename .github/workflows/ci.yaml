@@ -94,7 +94,6 @@ jobs:
 
       # Derive APP_VERSION & BUILD_DATE (for backend Dockerfile build args)
       - name: Derive app version and build date (backend)
-      - name: Derive app version and build date (backend)
         id: ver
         shell: bash
         run: |
