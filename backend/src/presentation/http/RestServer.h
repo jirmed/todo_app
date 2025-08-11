@@ -24,11 +24,13 @@ public:
 
     [[nodiscard]] crow::response handleUpdateTask(const crow::request &req, int id) const;
 
-    // Zdravotní endpoint (interní pro healthcheck)
-    [[nodiscard]] crow::response handleHealth() const;
 
 private:
     void setupRoutes();
+
+    crow::response handleHealth() const;
+
+    crow::response handleVersion() const;
 
     [[nodiscard]] crow::response processTaskUpdate(const UpdateTaskDto &dto, int id) const;
 

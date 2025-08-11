@@ -4,9 +4,11 @@
 #include "presentation/http/dto/CreateTaskDto.h"
 #include "presentation/http/dto/UpdateTaskDto.h"
 #include "presentation/http/dto/TaskDto.h"
+#include "presentation/http/dto/VersionDto.h"
+#include "todo/build/build_info.hpp"
+
 #include <nlohmann/json.hpp>
 
-// Hlavičkové soubory pro Windows zůstanou, pokud je bude potřebovat jiná část Crow
 #ifdef _WIN32
 #include <windows.h>
 #include <io.h>
@@ -45,6 +47,10 @@ void RestServer::setupRoutes() {
         return handleHealth();
     });
 
+    CROW_ROUTE(app_, "/api/version").methods(crow::HTTPMethod::GET)([this]() {
+        return handleVersion();
+    });
+
     CROW_ROUTE(app_, "/api/tasks").methods(crow::HTTPMethod::GET)([this]() {
         return handleGetAllTasks();
     });
@@ -61,8 +67,22 @@ void RestServer::setupRoutes() {
 }
 
 crow::response RestServer::handleHealth() const {
-    // Jednoduchá odpověď pro Docker healthcheck
+    // Simple response for Docker healthcheck
     return createTextResponse(HTTP_OK, "OK");
+}
+
+crow::response RestServer::handleVersion() const {
+    VersionDto v{};
+    v.version   = std::string(todo::buildinfo::APP_VERSION);
+    v.gitTag    = std::string(todo::buildinfo::GIT_TAG);
+    v.gitSha    = std::string(todo::buildinfo::GIT_SHA);
+    v.buildTime = std::string(todo::buildinfo::BUILD_TIME);
+    v.buildType = std::string(todo::buildinfo::BUILD_TYPE);
+    v.compiler  = std::string(todo::buildinfo::COMPILER);
+    v.platform  = std::string(todo::buildinfo::PLATFORM);
+
+    nlohmann::json j = v;
+    return createJsonResponse(HTTP_OK, j.dump());
 }
 
 crow::response RestServer::handleGetAllTasks() const {

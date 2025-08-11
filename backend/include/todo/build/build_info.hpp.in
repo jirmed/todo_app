@@ -1,0 +1,13 @@
+#pragma once
+#include <string_view>
+
+namespace todo::buildinfo {
+// These constants are filled by CMake at configure time.
+inline constexpr std::string_view APP_VERSION = "@APP_VERSION@";
+inline constexpr std::string_view GIT_TAG     = "@GIT_TAG@";
+inline constexpr std::string_view GIT_SHA     = "@GIT_SHA@";
+inline constexpr std::string_view BUILD_TIME  = "@BUILD_TIME@";
+inline constexpr std::string_view BUILD_TYPE  = "@CMAKE_BUILD_TYPE@";
+inline constexpr std::string_view COMPILER    = "@CXX_COMPILER_ID@ @CXX_COMPILER_VERSION@";
+inline constexpr std::string_view PLATFORM    = "@CMAKE_SYSTEM_NAME@/@CMAKE_SYSTEM_PROCESSOR@";
+} // namespace todo::buildinfo

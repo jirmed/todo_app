@@ -4,8 +4,6 @@
     <mapping directory="" vcs="Git" />
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/backend/cmake-build-debug/_deps/asio-src" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/backend/cmake-build-debug/_deps/crow-src" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/backend/cmake-build-release/_deps/asio-src" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/backend/cmake-build-release/_deps/crow-src" vcs="Git" />
   </component>
 </project>
