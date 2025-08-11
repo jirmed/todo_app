@@ -1,5 +1,5 @@
 # FILE: .github/workflows/ci.yaml
-name: CI Backend Build
+name: CI Build and deploy
 
 on:
   push:
