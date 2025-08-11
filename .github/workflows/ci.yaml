@@ -144,7 +144,8 @@ jobs:
           build-args: |
             APP_VERSION=${{ steps.ver.outputs.app_version }}
             VCS_REF=${{ github.sha }}
-            BUILD_DATE=${{ steps.ver.outputs.build_date }}
+            GIT_TAG=${{ github.ref_name }}
+            BUILD_DATE=${{ steps.ver.outputs.build_date
           cache-from: |
             type=gha,scope=${{ matrix.cache_scope }}
             type=registry,ref=${{ steps.tags.outputs.image }}:latest
