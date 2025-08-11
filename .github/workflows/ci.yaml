@@ -1,22 +1,46 @@
+# FILE: .github/workflows/ci.yaml
 name: CI Backend Build
 
 on:
   push:
     branches:
       - main
+    tags:
+      - 'v*.*.*'
   pull_request:
+    branches:
+      - main
 
 permissions:
   contents: read
   packages: write
 
 jobs:
-  build-backend:
+  build:
+    name: Build & Push (${{ matrix.name }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: backend
+            context: ./backend
+            image_name: todo-backend
+            cache_scope: backend
+          - name: frontend
+            context: ./frontend
+            image_name: todo-frontend
+            cache_scope: frontend
+          - name: proxy
+            context: ./nginx
+            image_name: todo-proxy
+            cache_scope: proxy
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # needed for tag/branch ancestry checks and short SHA
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -31,64 +55,83 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push backend image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./backend
-          push: true
-          tags: ghcr.io/jirmed/todo-backend:latest
-          platforms: linux/arm64, linux/amd64
-          cache-from: |
-            type=gha,scope=backend
-            type=registry,ref=ghcr.io/jirmed/todo-backend:latest
-          cache-to: type=gha,mode=max,scope=backend
+      - name: Compute image tags
+        id: tags
+        shell: bash
+        run: |
+          set -euo pipefail
+          OWNER="${GITHUB_REPOSITORY_OWNER,,}"      # lowercase
+          IMAGE="ghcr.io/${OWNER}/${{ matrix.image_name }}"
+          SHORT_SHA="$(git rev-parse --short=7 HEAD)"
 
-      - name: Build and push frontend image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./frontend
-          push: true
-          tags: ghcr.io/jirmed/todo-frontend:latest
-          platforms: linux/arm64, linux/amd64
-          cache-from: |
-            type=gha,scope=frontend
-            type=registry,ref=ghcr.io/jirmed/todo-frontend:latest
-          cache-to: type=gha,mode=max,scope=frontend
+          # Always tag latest and sha-<short>
+          TAGS=()
+          TAGS+=("${IMAGE}:latest")
+          TAGS+=("${IMAGE}:sha-${SHORT_SHA}")
 
-      - name: Build and push proxy image
-        uses: docker/build-push-action@v5
+          # If this is a tag push, also add semver tags vX.Y.Z, vX.Y, vX
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            VERSION="${GITHUB_REF_NAME}"  # e.g., v1.2.3
+            if [[ "${VERSION}" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+              MAJOR="v${BASH_REMATCH[1]}"
+              MINOR="${MAJOR}.${BASH_REMATCH[2]}"
+              PATCH="${VERSION}"
+              TAGS+=("${IMAGE}:${PATCH}")
+              TAGS+=("${IMAGE}:${MINOR}")
+              TAGS+=("${IMAGE}:${MAJOR}")
+            else
+              echo "Warning: Tag '${VERSION}' does not match semver vX.Y.Z; skipping semver tags."
+            fi
+          fi
+
+          # Output newline-separated list for docker/build-push-action
+          {
+            echo "list<<EOF"
+            printf "%s\n" "${TAGS[@]}"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Build and push ${{ matrix.name }} image
+        uses: docker/build-push-action@v6
         with:
-          context: ./nginx
+          context: ${{ matrix.context }}
           push: true
-          tags: ghcr.io/jirmed/todo-proxy:latest
-          platforms: linux/arm64, linux/amd64
+          tags: ${{ steps.tags.outputs.list }}
+          platforms: linux/arm64,linux/amd64
           cache-from: |
-            type=gha,scope=proxy
-            type=registry,ref=ghcr.io/jirmed/todo-proxy:latest
-          cache-to: type=gha,mode=max,scope=proxy
+            type=gha,scope=${{ matrix.cache_scope }}
+            type=registry,ref=ghcr.io/${{ github.repository_owner }}/{{ matrix.image_name }}:latest
+          cache-to: type=gha,mode=max,scope=${{ matrix.cache_scope }}
+
   deploy:
-    needs: build-backend
+    name: Deploy stack over SSH
+    needs: build
     runs-on: ubuntu-latest
-
+    if: github.event_name != 'pull_request' # deploy only on push/tag, not on PRs
+    env:
+      SSH_USER: ubuntu
+      SSH_HOST: ${{ vars.host_ip }}
+      REMOTE_DIR: /home/ubuntu
+      STACK_NAME: todoapp
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Prepare SSH key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
+      - name: Start ssh-agent and add key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
 
       - name: Add server to known_hosts
-        run: |
-          ssh-keyscan -H ${{ vars.host_ip }} >> ~/.ssh/known_hosts
+        run: ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
 
-      - name: Deploy stack over SSH
-        env:
-          SSH_USER: ubuntu
-          SSH_HOST: ${{ vars.host_ip }}
+      - name: Sync compose files
         run: |
-          scp -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=yes docker-compose.yaml $SSH_USER@$SSH_HOST:/home/ubuntu/
-          scp -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=yes docker-compose.prod.yaml $SSH_USER@$SSH_HOST:/home/ubuntu/
-          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=yes $SSH_USER@$SSH_HOST "docker stack deploy -c /home/ubuntu/docker-compose.yaml -c /home/ubuntu/docker-compose.prod.yaml todoapp"
+          rsync -avz --delete \
+            docker-compose.yaml docker-compose.prod.yaml \
+            "${SSH_USER}@${SSH_HOST}:${REMOTE_DIR}/"
+
+      - name: Deploy stack
+        run: |
+          ssh -o StrictHostKeyChecking=yes "${SSH_USER}@${SSH_HOST}" \
+            "docker stack deploy -c ${REMOTE_DIR}/docker-compose.yaml -c ${REMOTE_DIR}/docker-compose.prod.yaml ${STACK_NAME}"
