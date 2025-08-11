@@ -36,35 +36,30 @@ RUN cmake -B build -S . -DBUILD_TESTING=OFF
 FROM base AS build
 WORKDIR /app
 
-# Reuse fetched dependencies from deps stage (keep cache hot)
 COPY --from=deps /app/build/_deps/ /app/build/_deps/
-
-# Project sources
 COPY src/ src/
 COPY include/ include/
 COPY CMakeLists.txt .
 COPY cmake/ cmake/
 
-# Build-time metadata (optional; only pass when available)
 ARG APP_VERSION
 ARG VCS_REF
+ARG GIT_TAG
+ENV VCS_REF=${VCS_REF}
+ENV GIT_TAG=${GIT_TAG}
 
-# Configure & build (pass APP_VERSION only when non-empty)
 RUN cmake -B build -S . -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release \
     $([ -n "$APP_VERSION" ] && echo -DAPP_VERSION=${APP_VERSION}) \
     $([ -n "$VCS_REF" ] && echo -DGIT_SHA=${VCS_REF}) \
+    $([ -n "$GIT_TAG" ] && echo -DGIT_TAG=${GIT_TAG}) \
  && cmake --build build --target todo-server --config Release -j
 
-# -------- Final runtime image --------
+# ... (final stage beze změny, ale ponech ARG/labels)
 FROM alpine:3.22 AS final
-
-# Minimal runtime deps
 RUN apk add --no-cache libstdc++ curl
-
 WORKDIR /app
 COPY --from=build /app/build/todo-server .
 
-# OCI labels (for audit/rollback)
 ARG APP_VERSION
 ARG VCS_REF
 ARG BUILD_DATE

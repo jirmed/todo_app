@@ -55,6 +55,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Compute image tags for each matrix item and expose base image name (lowercased owner)
       - name: Compute image tags
         id: tags
         shell: bash
@@ -84,23 +85,47 @@ jobs:
             fi
           fi
 
-          # Output newline-separated list for docker/build-push-action
           {
             echo "list<<EOF"
             printf "%s\n" "${TAGS[@]}"
             echo "EOF"
+            echo "image=${IMAGE}"
           } >> "$GITHUB_OUTPUT"
+
+      # Derive APP_VERSION & BUILD_DATE (for backend Dockerfile build args)
+      - name: Derive app version and build date (backend)
+        id: ver
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            # Tag push -> use X.Y.Z (no -SNAPSHOT)
+            RAW="${GITHUB_REF_NAME}"   # vX.Y.Z
+            APPV="${RAW#v}"
+          else
+            # Branch push -> read numeric version from backend/CMakeLists and append -SNAPSHOT
+            V=$(grep -Po '(?<=^project\([^)]*VERSION )[^ )]+' backend/CMakeLists.txt || true)
+            [[ -n "$V" ]] || V="0.0.0"
+            APPV="${V}-SNAPSHOT"
+          fi
+          echo "app_version=${APPV}" >> $GITHUB_OUTPUT
+          echo "build_date=$(date -u +%FT%TZ)" >> $GITHUB_OUTPUT
 
       - name: Build and push ${{ matrix.name }} image
         uses: docker/build-push-action@v6
         with:
           context: ${{ matrix.context }}
           push: true
-          tags: ${{ steps.tags.outputs.list }}
           platforms: linux/arm64,linux/amd64
+          tags: ${{ steps.tags.outputs.list }}
+          # Always pass build args; non-backend Dockerfiles will ignore them if unused
+          build-args: |
+            APP_VERSION=${{ steps.ver.outputs.app_version }}
+            VCS_REF=${{ github.sha }}
+            BUILD_DATE=${{ steps.ver.outputs.build_date }}
           cache-from: |
             type=gha,scope=${{ matrix.cache_scope }}
-            type=registry,ref=ghcr.io/${{ github.repository_owner }}/{{ matrix.image_name }}:latest
+            type=registry,ref=${{ steps.tags.outputs.image }}:latest
           cache-to: type=gha,mode=max,scope=${{ matrix.cache_scope }}
 
   deploy:
@@ -134,4 +159,6 @@ jobs:
       - name: Deploy stack
         run: |
           ssh -o StrictHostKeyChecking=yes "${SSH_USER}@${SSH_HOST}" \
-            "docker stack deploy -c ${REMOTE_DIR}/docker-compose.yaml -c ${REMOTE_DIR}/docker-compose.prod.yaml ${STACK_NAME}"
+            "docker stack deploy --with-registry-auth --prune --resolve-image changed \
+               -c ${REMOTE_DIR}/docker-compose.yaml \
+               -c ${REMOTE_DIR}/docker-compose.prod.yaml ${STACK_NAME}"
