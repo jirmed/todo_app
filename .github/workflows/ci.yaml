@@ -94,22 +94,45 @@ jobs:
 
       # Derive APP_VERSION & BUILD_DATE (for backend Dockerfile build args)
       - name: Derive app version and build date (backend)
+      - name: Derive app version and build date (backend)
         id: ver
         shell: bash
         run: |
           set -euo pipefail
+
           if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
             # Tag push -> use X.Y.Z (no -SNAPSHOT)
-            RAW="${GITHUB_REF_NAME}"   # vX.Y.Z
-            APPV="${RAW#v}"
+            RAW="${GITHUB_REF_NAME#v}"
+            APPV="${RAW}"
+            MODE="tag"
           else
-            # Branch push -> read numeric version from backend/CMakeLists and append -SNAPSHOT
-            V=$(grep -Po '(?<=^project\([^)]*VERSION )[^ )]+' backend/CMakeLists.txt || true)
-            [[ -n "$V" ]] || V="0.0.0"
-            APPV="${V}-SNAPSHOT"
+            # Branch push -> read numeric version from backend/CMakeLists.txt
+            # Be robust to CRLF and whitespace; if not found, try root CMakeLists.txt
+            RAW=$(tr -d '\r' < backend/CMakeLists.txt \
+              | sed -nE 's/^[[:space:]]*project\([^)]*VERSION[[:space:]]+([0-9]+\.[0-9]+\.[0-9]+).*$/\1/p' \
+              | head -n1 || true)
+
+            if [[ -z "${RAW:-}" && -f CMakeLists.txt ]]; then
+              RAW=$(tr -d '\r' < CMakeLists.txt \
+                | sed -nE 's/^[[:space:]]*project\([^)]*VERSION[[:space:]]+([0-9]+\.[0-9]+\.[0-9]+).*$/\1/p' \
+                | head -n1 || true)
+            fi
+
+            if [[ -z "${RAW:-}" ]]; then
+              echo "WARN: Could not detect PROJECT_VERSION; falling back to 1.0.0-SNAPSHOT"
+              RAW="1.0.0"
+            fi
+
+            APPV="${RAW}-SNAPSHOT"
+            MODE="branch"
           fi
+
+          BD=$(date -u +%FT%TZ)
           echo "app_version=${APPV}" >> $GITHUB_OUTPUT
-          echo "build_date=$(date -u +%FT%TZ)" >> $GITHUB_OUTPUT
+          echo "build_date=${BD}"   >> $GITHUB_OUTPUT
+
+          echo "Derived APP_VERSION='${APPV}' (mode=${MODE})"
+          echo "Build date: ${BD}"
 
       - name: Build and push ${{ matrix.name }} image
         uses: docker/build-push-action@v6
