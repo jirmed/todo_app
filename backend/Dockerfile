@@ -47,11 +47,12 @@ COPY cmake/ cmake/
 
 # Build-time metadata (optional; only pass when available)
 ARG APP_VERSION
+ARG VCS_REF
 
 # Configure & build (pass APP_VERSION only when non-empty)
 RUN cmake -B build -S . -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release \
     $([ -n "$APP_VERSION" ] && echo -DAPP_VERSION=${APP_VERSION}) \
- && test -f build/generated/todo/build/build_info.hpp && echo "build_info.hpp OK" \
+    $([ -n "$VCS_REF" ] && echo -DGIT_SHA=${VCS_REF}) \
  && cmake --build build --target todo-server --config Release -j
 
 # -------- Final runtime image --------
