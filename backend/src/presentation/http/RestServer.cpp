@@ -41,6 +41,10 @@ void RestServer::run() {
 }
 
 void RestServer::setupRoutes() {
+    CROW_ROUTE(app_, "/health").methods(crow::HTTPMethod::GET)([this]() {
+        return handleHealth();
+    });
+
     CROW_ROUTE(app_, "/api/tasks").methods(crow::HTTPMethod::GET)([this]() {
         return handleGetAllTasks();
     });
@@ -54,6 +58,11 @@ void RestServer::setupRoutes() {
     ([this](const crow::request &req, int id) {
         return handleUpdateTask(req, id);
     });
+}
+
+crow::response RestServer::handleHealth() const {
+    // Jednoduchá odpověď pro Docker healthcheck
+    return createTextResponse(HTTP_OK, "OK");
 }
 
 crow::response RestServer::handleGetAllTasks() const {

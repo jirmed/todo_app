@@ -21,6 +21,12 @@ services:
       - "traefik.http.routers.todo-backend.entrypoints=websecure"
       - "traefik.http.routers.todo-backend.tls.certresolver=letsencrypt"
       - "traefik.http.services.todo-backend.loadbalancer.server.port=18080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:18080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   frontend:
     labels:
