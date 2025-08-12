@@ -4,7 +4,7 @@ services:
   traefik:
     image: traefik:v2.11
     command:
-      # společná konfigurace pro všechny scénáře
+      # common baseline config
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
@@ -12,22 +12,54 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
     networks: [traefik]
     labels:
-      - "traefik.enable=true"   # detailní routy doplní overrides
+      - "traefik.enable=true"   # detailed routes come from prod override
+    deploy:
+      # safe rolling updates for the proxy as well
+      update_config:
+        order: start-first
+        parallelism: 1
+        delay: 5s
+      rollback_config:
+        order: stop-first
 
   backend:
     image: ghcr.io/jirmed/todo-backend:latest
-    expose: ["18080"]
+    # 'expose' is deprecated in swarm; services see each other via networks anyway
     networks: [traefik]
-    labels: ["traefik.enable=true"]  # routy + TLS doplní overrides
+    labels: ["traefik.enable=true"]  # routes + TLS added by prod override
+    environment:
+      - APP_REVISION=${REVISION}   # optional env for app logging/metrics
+    deploy:
+      labels:
+        # change on every deploy to force a swarm service update
+        - "com.konzult.revision=${REVISION}"
+        - "org.opencontainers.image.revision=${REVISION}"
+      update_config:
+        order: start-first
+        parallelism: 1
+        delay: 5s
+      rollback_config:
+        order: stop-first
 
   frontend:
     image: ghcr.io/jirmed/todo-frontend:latest
-    expose: ["80"]
     networks: [traefik]
-    labels: ["traefik.enable=true"]  # routy + TLS doplní overrides
+    labels: ["traefik.enable=true"]  # routes + TLS added by prod override
+    environment:
+      - APP_REVISION=${REVISION}
+    deploy:
+      labels:
+        - "com.konzult.revision=${REVISION}"
+        - "org.opencontainers.image.revision=${REVISION}"
+      update_config:
+        order: start-first
+        parallelism: 1
+        delay: 5s
+      rollback_config:
+        order: stop-first
 
 networks:
   traefik:
 
 volumes:
-  letsencrypt:   # používá pouze produkční varianta
+  letsencrypt:   # used only by production variant

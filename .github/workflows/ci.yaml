@@ -139,7 +139,12 @@ jobs:
 
       - name: Deploy stack
         run: |
-          ssh -o StrictHostKeyChecking=yes "${SSH_USER}@${SSH_HOST}" \
-            "docker stack deploy --with-registry-auth --prune --resolve-image changed \
-               -c ${REMOTE_DIR}/docker-compose.yaml \
-               -c ${REMOTE_DIR}/docker-compose.prod.yaml ${STACK_NAME}"
+          ssh -o StrictHostKeyChecking=yes "${SSH_USER}@${SSH_HOST}" '
+            set -euo pipefail
+            export REVISION='${{ github.sha }}'
+            # Pokud v compose používáš substituci REGISTRY_IMAGE:
+            export REGISTRY_IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/todo-backend
+            docker stack deploy --with-registry-auth --prune --resolve-image changed \
+              -c ${REMOTE_DIR}/docker-compose.yaml \
+              -c ${REMOTE_DIR}/docker-compose.prod.yaml ${STACK_NAME}
+          '

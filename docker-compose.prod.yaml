@@ -13,6 +13,13 @@ services:
     ports: ["80:80", "443:443"]
     volumes:
       - "letsencrypt:/letsencrypt"
+    deploy:
+      update_config:
+        order: start-first
+        parallelism: 1
+        delay: 5s
+      rollback_config:
+        order: stop-first
 
   backend:
     labels:
@@ -27,6 +34,17 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+    deploy:
+      labels:
+        # service-level labels change every deploy -> forces rolling update
+        - "com.konzult.revision=${REVISION}"
+        - "org.opencontainers.image.revision=${REVISION}"
+      update_config:
+        order: start-first
+        parallelism: 1
+        delay: 5s
+      rollback_config:
+        order: stop-first
 
   frontend:
     labels:
@@ -35,3 +53,13 @@ services:
       - "traefik.http.routers.todo-frontend.entrypoints=websecure"
       - "traefik.http.routers.todo-frontend.tls.certresolver=letsencrypt"
       - "traefik.http.services.todo-frontend.loadbalancer.server.port=80"
+    deploy:
+      labels:
+        - "com.konzult.revision=${REVISION}"
+        - "org.opencontainers.image.revision=${REVISION}"
+      update_config:
+        order: start-first
+        parallelism: 1
+        delay: 5s
+      rollback_config:
+        order: stop-first
