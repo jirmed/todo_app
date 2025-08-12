@@ -51,48 +51,26 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Compute image tags and base image name
-      - name: Compute image tags
-        id: compute
-        shell: bash
-        run: |
-          set -euo pipefail
-          OWNER="${GITHUB_REPOSITORY_OWNER,,}"
-          IMAGE="ghcr.io/${OWNER}/${{ matrix.image_name }}"
-          SHORT_SHA="$(git rev-parse --short=7 HEAD)"
+      # Standardizované generování tagů/labelů (žádné vlastní 'list'/'image')
+      - name: Docker meta (${{ matrix.name }})
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/${{ matrix.image_name }}
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix=sha-,format=short
+            # Semver tagy se vytvoří jen pokud ref je vX.Y.Z
+            type=semver,pattern={{version}},value=${{ github.ref_name }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ github.ref_name }}
+            type=semver,pattern={{major}},value=${{ github.ref_name }}
 
-          TAGS=()
-          TAGS+=("${IMAGE}:latest")
-          TAGS+=("${IMAGE}:sha-${SHORT_SHA}")
-
-          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
-            VERSION="${GITHUB_REF_NAME}"
-            if [[ "${VERSION}" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
-              MAJOR="v${BASH_REMATCH[1]}"
-              MINOR="${MAJOR}.${BASH_REMATCH[2]}"
-              PATCH="${VERSION}"
-              TAGS+=("${IMAGE}:${PATCH}")
-              TAGS+=("${IMAGE}:${MINOR}")
-              TAGS+=("${IMAGE}:${MAJOR}")
-            else
-              echo "Warning: Tag '${VERSION}' does not match vX.Y.Z; skipping semver tags."
-            fi
-          fi
-
-          {
-            echo "list<<EOF"
-            printf "%s\n" "${TAGS[@]}"
-            echo "EOF"
-            echo "image=${IMAGE}"
-          } >> "$GITHUB_OUTPUT"
-
-      # Derive APP_VERSION, BUILD_DATE and (optionally) GIT_TAG build-arg
+      # APP_VERSION & BUILD_DATE & (jen na tag push) GIT_TAG
       - name: Derive app version and build date (backend)
         id: ver
         shell: bash
         run: |
           set -euo pipefail
-
           if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
             RAW="${GITHUB_REF_NAME#v}"   # X.Y.Z
             APPV="${RAW}"
@@ -104,13 +82,12 @@ jobs:
               | head -n1 || true)
             [[ -n "${RAW:-}" ]] || RAW="1.0.0"
             APPV="${RAW}-SNAPSHOT"
-            GIT_TAG_ARG=""   # nechceme "main" ve snapshotu
+            GIT_TAG_ARG=""
             MODE="branch"
           fi
-
           BD=$(date -u +%FT%TZ)
-          echo "app_version=${APPV}"   >> "$GITHUB_OUTPUT"
-          echo "build_date=${BD}"      >> "$GITHUB_OUTPUT"
+          echo "app_version=${APPV}"        >> "$GITHUB_OUTPUT"
+          echo "build_date=${BD}"           >> "$GITHUB_OUTPUT"
           echo "git_tag_arg=${GIT_TAG_ARG}" >> "$GITHUB_OUTPUT"
           echo "Derived APP_VERSION='${APPV}' (mode=${MODE})"
 
@@ -120,7 +97,8 @@ jobs:
           context: ${{ matrix.context }}
           push: true
           platforms: linux/arm64,linux/amd64
-          tags: ${{ steps.compute.outputs.list }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             APP_VERSION=${{ steps.ver.outputs.app_version }}
             VCS_REF=${{ github.sha }}
@@ -128,14 +106,14 @@ jobs:
             ${{ steps.ver.outputs.git_tag_arg }}
           cache-from: |
             type=gha,scope=${{ matrix.cache_scope }}
-            type=registry,ref=${{ steps.compute.outputs.image }}:latest
+            type=registry,ref=ghcr.io/${{ github.repository_owner }}/${{ matrix.image_name }}:latest
           cache-to: type=gha,mode=max,scope=${{ matrix.cache_scope }}
 
   deploy:
     name: Deploy stack over SSH
     needs: build
     runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' # deploy only on push/tag, not on PRs
     env:
       SSH_USER: ubuntu
       SSH_HOST: ${{ vars.host_ip }}
