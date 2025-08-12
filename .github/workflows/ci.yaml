@@ -1,15 +1,11 @@
-# FILE: .github/workflows/ci.yaml
 name: CI Build and deploy
 
 on:
   push:
-    branches:
-      - main
-    tags:
-      - 'v*.*.*'
+    branches: [ main ]
+    tags: [ 'v*.*.*' ]
   pull_request:
-    branches:
-      - main
+    branches: [ main ]
 
 permissions:
   contents: read
@@ -40,7 +36,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # needed for tag/branch ancestry checks and short SHA
+          fetch-depth: 0
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -55,24 +51,22 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Compute image tags for each matrix item and expose base image name (lowercased owner)
+      # Compute image tags and base image name
       - name: Compute image tags
-        id: tags
+        id: compute
         shell: bash
         run: |
           set -euo pipefail
-          OWNER="${GITHUB_REPOSITORY_OWNER,,}"      # lowercase
+          OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE="ghcr.io/${OWNER}/${{ matrix.image_name }}"
           SHORT_SHA="$(git rev-parse --short=7 HEAD)"
 
-          # Always tag latest and sha-<short>
           TAGS=()
           TAGS+=("${IMAGE}:latest")
           TAGS+=("${IMAGE}:sha-${SHORT_SHA}")
 
-          # If this is a tag push, also add semver tags vX.Y.Z, vX.Y, vX
           if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
-            VERSION="${GITHUB_REF_NAME}"  # e.g., v1.2.3
+            VERSION="${GITHUB_REF_NAME}"
             if [[ "${VERSION}" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
               MAJOR="v${BASH_REMATCH[1]}"
               MINOR="${MAJOR}.${BASH_REMATCH[2]}"
@@ -81,7 +75,7 @@ jobs:
               TAGS+=("${IMAGE}:${MINOR}")
               TAGS+=("${IMAGE}:${MAJOR}")
             else
-              echo "Warning: Tag '${VERSION}' does not match semver vX.Y.Z; skipping semver tags."
+              echo "Warning: Tag '${VERSION}' does not match vX.Y.Z; skipping semver tags."
             fi
           fi
 
@@ -92,7 +86,7 @@ jobs:
             echo "image=${IMAGE}"
           } >> "$GITHUB_OUTPUT"
 
-      # Derive APP_VERSION & BUILD_DATE (for backend Dockerfile build args)
+      # Derive APP_VERSION, BUILD_DATE and (optionally) GIT_TAG build-arg
       - name: Derive app version and build date (backend)
         id: ver
         shell: bash
@@ -100,38 +94,25 @@ jobs:
           set -euo pipefail
 
           if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
-            # Tag push -> use X.Y.Z (no -SNAPSHOT)
-            RAW="${GITHUB_REF_NAME#v}"
+            RAW="${GITHUB_REF_NAME#v}"   # X.Y.Z
             APPV="${RAW}"
+            GIT_TAG_ARG="GIT_TAG=${GITHUB_REF_NAME}"
             MODE="tag"
           else
-            # Branch push -> read numeric version from backend/CMakeLists.txt
-            # Be robust to CRLF and whitespace; if not found, try root CMakeLists.txt
             RAW=$(tr -d '\r' < backend/CMakeLists.txt \
               | sed -nE 's/^[[:space:]]*project\([^)]*VERSION[[:space:]]+([0-9]+\.[0-9]+\.[0-9]+).*$/\1/p' \
               | head -n1 || true)
-
-            if [[ -z "${RAW:-}" && -f CMakeLists.txt ]]; then
-              RAW=$(tr -d '\r' < CMakeLists.txt \
-                | sed -nE 's/^[[:space:]]*project\([^)]*VERSION[[:space:]]+([0-9]+\.[0-9]+\.[0-9]+).*$/\1/p' \
-                | head -n1 || true)
-            fi
-
-            if [[ -z "${RAW:-}" ]]; then
-              echo "WARN: Could not detect PROJECT_VERSION; falling back to 1.0.0-SNAPSHOT"
-              RAW="1.0.0"
-            fi
-
+            [[ -n "${RAW:-}" ]] || RAW="1.0.0"
             APPV="${RAW}-SNAPSHOT"
+            GIT_TAG_ARG=""   # nechceme "main" ve snapshotu
             MODE="branch"
           fi
 
           BD=$(date -u +%FT%TZ)
-          echo "app_version=${APPV}" >> $GITHUB_OUTPUT
-          echo "build_date=${BD}"   >> $GITHUB_OUTPUT
-
+          echo "app_version=${APPV}"   >> "$GITHUB_OUTPUT"
+          echo "build_date=${BD}"      >> "$GITHUB_OUTPUT"
+          echo "git_tag_arg=${GIT_TAG_ARG}" >> "$GITHUB_OUTPUT"
           echo "Derived APP_VERSION='${APPV}' (mode=${MODE})"
-          echo "Build date: ${BD}"
 
       - name: Build and push ${{ matrix.name }} image
         uses: docker/build-push-action@v6
@@ -139,22 +120,22 @@ jobs:
           context: ${{ matrix.context }}
           push: true
           platforms: linux/arm64,linux/amd64
-          tags: ${{ steps.tags.outputs.list }}
+          tags: ${{ steps.compute.outputs.list }}
           build-args: |
             APP_VERSION=${{ steps.ver.outputs.app_version }}
             VCS_REF=${{ github.sha }}
             BUILD_DATE=${{ steps.ver.outputs.build_date }}
-            ${{ github.ref_type == 'tag' && format('GIT_TAG={0}', github.ref_name) || '
+            ${{ steps.ver.outputs.git_tag_arg }}
           cache-from: |
             type=gha,scope=${{ matrix.cache_scope }}
-            type=registry,ref=${{ steps.tags.outputs.image }}:latest
+            type=registry,ref=${{ steps.compute.outputs.image }}:latest
           cache-to: type=gha,mode=max,scope=${{ matrix.cache_scope }}
 
   deploy:
     name: Deploy stack over SSH
     needs: build
     runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request' # deploy only on push/tag, not on PRs
+    if: github.event_name != 'pull_request'
     env:
       SSH_USER: ubuntu
       SSH_HOST: ${{ vars.host_ip }}
