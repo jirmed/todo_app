@@ -63,9 +63,9 @@ jobs:
             # vždy přidej sha-<short>
             type=sha,prefix=sha-,format=short
             # Semver z refu (vX.Y.Z) + přidej 'v' prefix do vydaných tagů
-            type=semver,pattern={{version}},prefix='v'
-            type=semver,pattern={{major}}.{{minor}},prefix='v'
-            type=semver,pattern={{major}},prefix='v'
+            type=semver,pattern={{version}},prefix=v
+            type=semver,pattern={{major}}.{{minor}},prefix=v
+            type=semver,pattern={{major}},prefix=v
       
 
       # APP_VERSION & BUILD_DATE & (jen na tag push) GIT_TAG
