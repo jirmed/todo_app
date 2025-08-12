@@ -58,12 +58,15 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository_owner }}/${{ matrix.image_name }}
           tags: |
-            type=raw,value=latest
+            # latest jen mimo tagy, ať release neprepíše latest
+            type=raw,value=latest,enable=${{ github.ref_type != 'tag' }}
+            # vždy přidej sha-<short>
             type=sha,prefix=sha-,format=short
-            # Semver tagy se vytvoří jen pokud ref je vX.Y.Z
-            type=semver,pattern={{version}},value=${{ github.ref_name }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ github.ref_name }}
-            type=semver,pattern={{major}},value=${{ github.ref_name }}
+            # Semver z refu (vX.Y.Z) + přidej 'v' prefix do vydaných tagů
+            type=semver,pattern={{version}},prefix=v
+            type=semver,pattern={{major}}.{{minor}},prefix=v
+            type=semver,pattern={{major}},prefix=v
+      
 
       # APP_VERSION & BUILD_DATE & (jen na tag push) GIT_TAG
       - name: Derive app version and build date (backend)
@@ -138,12 +141,18 @@ jobs:
             "${SSH_USER}@${SSH_HOST}:${REMOTE_DIR}/"
 
       - name: Deploy stack (tag to prod)
+        if: github.event_name != 'pull_request' && github.ref_type == 'tag'
+        env:
+          GHCR_USER: ${{ secrets.GHCR_USER }}
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
         run: |
           ssh -o StrictHostKeyChecking=yes "${SSH_USER}@${SSH_HOST}" "
             set -euo pipefail
+            echo '${GHCR_TOKEN}' | docker login ghcr.io -u '${GHCR_USER}' --password-stdin
             export REVISION='${{ github.sha }}'
-            export IMAGE_TAG='${{ github.ref_name }}'   # např. v1.0.3
+            export IMAGE_TAG='${{ github.ref_name }}'   # např. v1.0.4
             docker stack deploy --with-registry-auth --prune --resolve-image changed \
               -c ${REMOTE_DIR}/docker-compose.yaml \
               -c ${REMOTE_DIR}/docker-compose.prod.yaml ${STACK_NAME}
           "
+      
