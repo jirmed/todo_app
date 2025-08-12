@@ -1,0 +1,105 @@
+name: Post-release bump
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'   # e.g., v1.0.2
+
+permissions:
+  contents: write       # commit/push
+  pull-requests: write  # create & merge PRs
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compute next SNAPSHOT version and patch file
+        id: bump
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TAG="${GITHUB_REF_NAME}"   # vX.Y.Z
+          if [[ ! "${TAG}" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            echo "Tag '${TAG}' is not vX.Y.Z. Skipping."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          MAJOR="${BASH_REMATCH[1]}"
+          MINOR="${BASH_REMATCH[2]}"
+          PATCH="${BASH_REMATCH[3]}"
+          NEXT_PATCH=$((PATCH+1))
+          NEW_VER="${MAJOR}.${MINOR}.${NEXT_PATCH}"   # X.Y.(Z+1)
+
+          FILE="backend/CMakeLists.txt"
+          CUR=$(tr -d '\r' < "${FILE}" \
+            | sed -nE 's/^[[:space:]]*project\([^)]*VERSION[[:space:]]+([0-9]+\.[0-9]+\.[0-9]+).*$/\1/p' \
+            | head -n1 || true)
+
+          echo "Current: '${CUR}'  ->  Next: '${NEW_VER}'"
+
+          if [[ "${CUR}" == "${NEW_VER}" ]]; then
+            echo "Already bumped. Nothing to change."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "new_ver=${NEW_VER}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Replace numeric VERSION in project(...) line
+          sed -i -E "s/^([[:space:]]*project\([^)]*VERSION[[:space:]]+)[0-9]+\.[0-9]+\.[0-9]+(.*)$/\1${NEW_VER}\2/" "${FILE}"
+
+          if git diff --quiet -- "${FILE}"; then
+            echo "No diff produced. Skipping."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "new_ver=${NEW_VER}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "new_ver=${NEW_VER}" >> "$GITHUB_OUTPUT"
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+      - name: Create PR with bump to ${{ steps.bump.outputs.new_ver }}-SNAPSHOT
+        if: steps.bump.outputs.skip != 'true'
+        id: cpr
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: bump to ${{ steps.bump.outputs.new_ver }}-SNAPSHOT"
+          title: "chore: bump to ${{ steps.bump.outputs.new_ver }}-SNAPSHOT"
+          body: |
+            Automated post-release bump triggered by tag **${{ github.ref_name }}**.
+            - Set numeric version in `backend/CMakeLists.txt` to `${{ steps.bump.outputs.new_ver }}`.
+            - Dev builds will report `${{ steps.bump.outputs.new_ver }}-SNAPSHOT`.
+          branch: chore/bump-${{ steps.bump.outputs.new_ver }}-SNAPSHOT
+          delete-branch: true
+          labels: |
+            chore
+            automerge
+          add-paths: |
+            backend/CMakeLists.txt
+
+      # Try immediate merge (squash + delete branch). If blocked by protections,
+      # fall back to enabling auto-merge; branch will delete after merge.
+      - name: Merge PR (squash + delete branch) or enable auto-merge
+        if: steps.bump.outputs.skip != 'true' && steps.cpr.outputs.pull-request-number
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -e
+          PR="${{ steps.cpr.outputs.pull-request-number }}"
+          echo "Attempting immediate merge for PR #${PR} ..."
+          if gh pr merge "${PR}" --squash --delete-branch; then
+            echo "Merged immediately."
+          else
+            echo "Immediate merge blocked. Enabling auto-merge..."
+            # Requires repo setting "Allow auto-merge" ON
+            gh pr merge "${PR}" --squash --delete-branch --auto
+            echo "Auto-merge enabled; branch will be deleted after merge."
+          fi
