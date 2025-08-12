@@ -22,6 +22,7 @@ services:
         order: stop-first
 
   backend:
+    image: ghcr.io/jirmed/todo-backend:${IMAGE_TAG:-latest}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.todo-backend.rule=Host(`todo.konzult.net`) && PathPrefix(`/api`)"
@@ -47,6 +48,7 @@ services:
         order: stop-first
 
   frontend:
+    image: ghcr.io/jirmed/todo-frontend:${IMAGE_TAG:-latest}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.todo-frontend.rule=Host(`todo.konzult.net`)"

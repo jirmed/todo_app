@@ -110,10 +110,10 @@ jobs:
           cache-to: type=gha,mode=max,scope=${{ matrix.cache_scope }}
 
   deploy:
-    name: Deploy stack over SSH
+    name: Deploy stack over SSH (prod)
     needs: build
     runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request' # deploy only on push/tag, not on PRs
+    if: github.event_name != 'pull_request' && github.ref_type == 'tag'   # ← jen na tag
     env:
       SSH_USER: ubuntu
       SSH_HOST: ${{ vars.host_ip }}
@@ -137,11 +137,12 @@ jobs:
             docker-compose.yaml docker-compose.prod.yaml \
             "${SSH_USER}@${SSH_HOST}:${REMOTE_DIR}/"
 
-      - name: Deploy stack
+      - name: Deploy stack (tag to prod)
         run: |
           ssh -o StrictHostKeyChecking=yes "${SSH_USER}@${SSH_HOST}" "
             set -euo pipefail
             export REVISION='${{ github.sha }}'
+            export IMAGE_TAG='${{ github.ref_name }}'   # např. v1.0.3
             docker stack deploy --with-registry-auth --prune --resolve-image changed \
               -c ${REMOTE_DIR}/docker-compose.yaml \
               -c ${REMOTE_DIR}/docker-compose.prod.yaml ${STACK_NAME}
