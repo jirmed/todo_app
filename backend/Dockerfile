@@ -42,16 +42,22 @@ COPY include/ include/
 COPY CMakeLists.txt .
 COPY cmake/ cmake/
 
+# Build args + env (přeneseme i do ENV, ať funguje fallback přes $ENV{...} v CMake)
 ARG APP_VERSION
 ARG VCS_REF
 ARG GIT_TAG
+ENV APP_VERSION=${APP_VERSION}
 ENV VCS_REF=${VCS_REF}
 ENV GIT_TAG=${GIT_TAG}
 
+# Cache-bust: změna vrstvy při každém commitu
+RUN echo "${VCS_REF}" > .vcs_ref
+
+# Robustní volání CMake – vždy pošli -D, i když je hodnota prázdná
 RUN cmake -B build -S . -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release \
-    $([ -n "$APP_VERSION" ] && echo -DAPP_VERSION=${APP_VERSION}) \
-    $([ -n "$VCS_REF" ] && echo -DGIT_SHA=${VCS_REF}) \
-    $([ -n "$GIT_TAG" ] && echo -DGIT_TAG=${GIT_TAG}) \
+    -DAPP_VERSION="${APP_VERSION}" \
+    -DGIT_SHA="${VCS_REF}" \
+    -DGIT_TAG="${GIT_TAG}" \
  && cmake --build build --target todo-server --config Release -j
 
 # ... (final stage beze změny, ale ponech ARG/labels)
