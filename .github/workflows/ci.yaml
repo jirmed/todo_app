@@ -137,14 +137,16 @@ jobs:
             docker-compose.yaml docker-compose.prod.yaml \
             "${SSH_USER}@${SSH_HOST}:${REMOTE_DIR}/"
 
-      - name: Deploy stack
+      - name: Deploy stack (heredoc)
         run: |
-          ssh -o StrictHostKeyChecking=yes "${SSH_USER}@${SSH_HOST}" '
-            set -euo pipefail
-            export REVISION='${{ github.sha }}'
-            # Pokud v compose používáš substituci REGISTRY_IMAGE:
-            export REGISTRY_IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/todo-backend
-            docker stack deploy --with-registry-auth --prune --resolve-image changed \
-              -c ${REMOTE_DIR}/docker-compose.yaml \
-              -c ${REMOTE_DIR}/docker-compose.prod.yaml ${STACK_NAME}
-          '
+          ssh -o StrictHostKeyChecking=yes "${SSH_USER}@${SSH_HOST}" bash -s <<'REMOTE'
+          set -euo pipefail
+          export REVISION='__REVISION__'
+          docker stack deploy --with-registry-auth --prune --resolve-image changed \
+            -c "__REMOTE_DIR__/docker-compose.yaml" \
+            -c "__REMOTE_DIR__/docker-compose.prod.yaml" "__STACK_NAME__"
+          REMOTE
+        env:
+          __REVISION__: ${{ github.sha }}
+          __REMOTE_DIR__: ${{ env.REMOTE_DIR }}
+          __STACK_NAME__: ${{ env.STACK_NAME }}
