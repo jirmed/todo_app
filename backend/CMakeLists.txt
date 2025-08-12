@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
-project(todo_app VERSION 1.0.3 LANGUAGES CXX)
+project(todo_app VERSION 1.0.6 LANGUAGES CXX)
 
 option(BUILD_TESTING "Build unit tests" OFF)
 
